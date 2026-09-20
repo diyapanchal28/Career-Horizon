@@ -8,17 +8,19 @@ const {
 
 const router = express.Router();
 
+const protect = require("../middleware/authMiddleware");
+
 
 // Create activity
-router.post("/", createActivity);
+router.post("/", protect, createActivity);
 
 
-// Get activities for a user
-router.get("/:userId", getUserActivities);
+// Get logged-in user's activities
+router.get("/", protect, getUserActivities);
 
 
-// Delete all activities for a user
-router.delete("/:userId", deleteUserActivities);
+// Delete logged-in user's activities
+router.delete("/", protect, deleteUserActivities);
 
 
 module.exports = router;

@@ -1,18 +1,17 @@
 const Activity = require("../models/Activity");
 
 
-// Create an activity
+// Create an activity for the logged-in user
 const createActivity = async (req, res) => {
     try {
         const {
-            user,
             type,
             career,
             description
         } = req.body;
 
         const activity = await Activity.create({
-            user,
+            user: req.user.userId,
             type,
             career,
             description
@@ -34,10 +33,10 @@ const createActivity = async (req, res) => {
 };
 
 
-// Get activities for a user
+// Get activities for the logged-in user
 const getUserActivities = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const userId = req.user.userId;
 
         const activities = await Activity.find({
             user: userId
@@ -56,10 +55,10 @@ const getUserActivities = async (req, res) => {
 };
 
 
-// Delete all activities for a user
+// Delete activities for the logged-in user
 const deleteUserActivities = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const userId = req.user.userId;
 
         await Activity.deleteMany({
             user: userId

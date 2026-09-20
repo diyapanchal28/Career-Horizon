@@ -1,18 +1,16 @@
 const Notification = require("../models/Notification");
 
-
-// Create a notification
+// Create a notification for the logged-in user
 const createNotification = async (req, res) => {
     try {
         const {
-            user,
             title,
             message,
             type
         } = req.body;
 
         const notification = await Notification.create({
-            user,
+            user: req.user.userId,
             title,
             message,
             type
@@ -29,10 +27,10 @@ const createNotification = async (req, res) => {
 };
 
 
-// Get notifications for a user
+// Get notifications for the logged-in user
 const getUserNotifications = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const userId = req.user.userId;
 
         const notifications = await Notification.find({
             user: userId
@@ -52,8 +50,11 @@ const getUserNotifications = async (req, res) => {
 // Mark notification as read
 const markNotificationAsRead = async (req, res) => {
     try {
-        const notification = await Notification.findByIdAndUpdate(
-            req.params.id,
+        const notification = await Notification.findOneAndUpdate(
+            {
+                _id: req.params.id,
+                user: req.user.userId
+            },
             { isRead: true },
             {
                 new: true,
@@ -81,9 +82,10 @@ const markNotificationAsRead = async (req, res) => {
 // Delete a notification
 const deleteNotification = async (req, res) => {
     try {
-        const notification = await Notification.findByIdAndDelete(
-            req.params.id
-        );
+        const notification = await Notification.findOneAndDelete({
+            _id: req.params.id,
+            user: req.user.userId
+        });
 
         if (!notification) {
             return res.status(404).json({
@@ -97,8 +99,7 @@ const deleteNotification = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({
-            message: "Failed to delete notification",
-            error: error.message
+            message: "Notification deleted successfully"
         });
     }
 };

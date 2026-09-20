@@ -11,6 +11,7 @@ const roadmapRoutes = require("./routes/roadmapRoutes");
 const savedCareerRoutes = require("./routes/savedCareerRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const app = express();
 
@@ -27,7 +28,7 @@ app.use("/api/roadmaps", roadmapRoutes);
 app.use("/api/saved-careers", savedCareerRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/notifications", notificationRoutes);
-
+app.use("/api/users", userRoutes);
 // Test route
 app.get("/", (req, res) => {
     res.send("Career Horizon Backend is running!");

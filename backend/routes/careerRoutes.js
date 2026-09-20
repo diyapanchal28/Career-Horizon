@@ -1,6 +1,7 @@
 const express = require("express");
 
 const protect = require("../middleware/authMiddleware");
+const adminOnly = require("../middleware/adminMiddleware");
 
 const {
     getCareers,
@@ -12,19 +13,19 @@ const {
 
 const router = express.Router();
 
-// Get all careers
-router.get("/", protect, getCareers);
+// Get all careers - Public
+router.get("/", getCareers);
 
-// Get one career by ID
+// Get one career by ID - Public
 router.get("/:id", getCareerById);
 
-// Create career
-router.post("/", protect, createCareer);
+// Create career - Admin only
+router.post("/", protect, adminOnly, createCareer);
 
-// Update career
-router.put("/:id", protect, updateCareer);
+// Update career - Admin only
+router.put("/:id", protect, adminOnly, updateCareer);
 
-// Delete career
-router.delete("/:id", protect, deleteCareer);
+// Delete career - Admin only
+router.delete("/:id", protect, adminOnly, deleteCareer);
 
 module.exports = router;

@@ -7,23 +7,25 @@ const {
     deleteNotification
 } = require("../controllers/notificationController");
 
+const protect = require("../middleware/authMiddleware");
+
 const router = express.Router();
 
 
 // Create notification
-router.post("/", createNotification);
+router.post("/", protect, createNotification);
 
 
-// Get user notifications
-router.get("/:userId", getUserNotifications);
+// Get logged-in user's notifications
+router.get("/", protect, getUserNotifications);
 
 
 // Mark notification as read
-router.put("/:id/read", markNotificationAsRead);
+router.put("/:id/read", protect, markNotificationAsRead);
 
 
 // Delete notification
-router.delete("/:id", deleteNotification);
+router.delete("/:id", protect, deleteNotification);
 
 
 module.exports = router;

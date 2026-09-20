@@ -8,6 +8,9 @@ const {
     deleteRoadmap
 } = require("../controllers/roadmapController");
 
+const protect = require("../middleware/authMiddleware");
+const adminOnly = require("../middleware/adminMiddleware");
+
 const router = express.Router();
 
 
@@ -19,16 +22,16 @@ router.get("/", getRoadmaps);
 router.get("/career/:careerId", getRoadmapByCareer);
 
 
-// Create roadmap
-router.post("/", createRoadmap);
+// Create roadmap - Admin only
+router.post("/", protect, adminOnly, createRoadmap);
 
 
-// Update roadmap
-router.put("/:id", updateRoadmap);
+// Update roadmap - Admin only
+router.put("/:id", protect, adminOnly, updateRoadmap);
 
 
-// Delete roadmap
-router.delete("/:id", deleteRoadmap);
+// Delete roadmap - Admin only
+router.delete("/:id", protect, adminOnly, deleteRoadmap);
 
 
 module.exports = router;
