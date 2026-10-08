@@ -96,18 +96,35 @@ const deleteNotification = async (req, res) => {
         res.json({
             message: "Notification deleted successfully"
         });
-
     } catch (error) {
         res.status(500).json({
-            message: "Notification deleted successfully"
+            message: "Failed to delete notification",
+            error: error.message
         });
     }
 };
 
+// Mark all notifications as read for logged-in user
+const markAllNotificationsAsRead = async (req, res) => {
+    try {
+        await Notification.updateMany(
+            { user: req.user.userId, isRead: false },
+            { $set: { isRead: true } }
+        );
+
+        res.json({ message: "All notifications marked as read" });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to update notifications",
+            error: error.message
+        });
+    }
+};
 
 module.exports = {
     createNotification,
     getUserNotifications,
     markNotificationAsRead,
+    markAllNotificationsAsRead,
     deleteNotification
 };

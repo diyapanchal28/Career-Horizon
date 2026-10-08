@@ -1,12 +1,48 @@
 const Career = require("../models/Career");
 
-// Get all careers
+// Get all careers with search, filter, and sort support
 const getCareers = async (req, res) => {
     try {
-        const careers = await Career.find()
+        const { search, fieldId, subfieldId, demand, education, sort } = req.query;
+        const filter = { isActive: true };
+
+        if (search) {
+            filter.$or = [
+                { name: { $regex: search, $options: "i" } },
+                { shortDescription: { $regex: search, $options: "i" } },
+                { description: { $regex: search, $options: "i" } },
+                { technicalSkills: { $regex: search, $options: "i" } },
+                { professionalSkills: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        if (fieldId && fieldId !== "all") {
+            filter.fieldId = fieldId;
+        }
+
+        if (subfieldId && subfieldId !== "all") {
+            filter.subfieldId = subfieldId;
+        }
+
+        if (demand && demand !== "all" && demand !== "Any") {
+            filter["demand.level"] = { $regex: demand, $options: "i" };
+        }
+
+        if (education && education !== "all" && education !== "Any") {
+            filter["education.minimumQualification"] = { $regex: education, $options: "i" };
+        }
+
+        let sortOption = { name: 1 };
+        if (sort === "newest") {
+            sortOption = { createdAt: -1 };
+        } else if (sort === "popular") {
+            sortOption = { viewCount: -1 };
+        }
+
+        const careers = await Career.find(filter)
             .populate("fieldId", "name")
             .populate("subfieldId", "name")
-            .sort({ name: 1 });
+            .sort(sortOption);
 
         res.json(careers);
     } catch (error) {
@@ -30,6 +66,9 @@ const getCareerById = async (req, res) => {
                 message: "Career not found"
             });
         }
+
+        // Increment view count in background
+        Career.findByIdAndUpdate(career._id, { $inc: { viewCount: 1 } }).exec();
 
         res.json(career);
     } catch (error) {

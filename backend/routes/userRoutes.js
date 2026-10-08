@@ -2,20 +2,22 @@ const express = require("express");
 
 const {
     getProfile,
-    updateProfile
+    updateProfile,
+    getAllUsers,
+    toggleUserStatus
 } = require("../controllers/userController");
 
 const protect = require("../middleware/authMiddleware");
+const adminOnly = require("../middleware/adminMiddleware");
 
 const router = express.Router();
 
-
-// Get logged-in user's profile
+// User profile routes
 router.get("/profile", protect, getProfile);
-
-
-// Update logged-in user's profile
 router.put("/profile", protect, updateProfile);
 
+// Admin user management routes
+router.get("/", protect, adminOnly, getAllUsers);
+router.put("/:id/status", protect, adminOnly, toggleUserStatus);
 
 module.exports = router;

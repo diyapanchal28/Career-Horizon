@@ -4,6 +4,7 @@ const {
     createNotification,
     getUserNotifications,
     markNotificationAsRead,
+    markAllNotificationsAsRead,
     deleteNotification
 } = require("../controllers/notificationController");
 
@@ -19,6 +20,8 @@ router.post("/", protect, createNotification);
 // Get logged-in user's notifications
 router.get("/", protect, getUserNotifications);
 
+// Mark all as read
+router.put("/read-all", protect, markAllNotificationsAsRead);
 
 // Mark notification as read
 router.put("/:id/read", protect, markNotificationAsRead);

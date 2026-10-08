@@ -1,4 +1,6 @@
 const User = require("../models/User");
+const Activity = require("../models/Activity");
+const Notification = require("../models/Notification");
 
 // Get logged-in user's profile
 const getProfile = async (req, res) => {
@@ -15,7 +17,6 @@ const getProfile = async (req, res) => {
         }
 
         res.json(user);
-
     } catch (error) {
         res.status(500).json({
             message: "Failed to get profile",
@@ -24,8 +25,7 @@ const getProfile = async (req, res) => {
     }
 };
 
-
-// Update logged-in user's profile
+// Update logged-in user's profile / assessment
 const updateProfile = async (req, res) => {
     try {
         const {
@@ -35,7 +35,12 @@ const updateProfile = async (req, res) => {
             profilePicture,
             education,
             selectedFields,
-            selectedSubfields
+            interestedFields,
+            selectedSubfields,
+            interestedSubfields,
+            workInterests,
+            workPreferences,
+            assessmentCompleted
         } = req.body;
 
         const user = await User.findById(req.user.userId);
@@ -46,45 +51,69 @@ const updateProfile = async (req, res) => {
             });
         }
 
-        // Update basic profile information
+        // Basic info
         if (name !== undefined) user.name = name;
+        if (phone !== undefined) user.phone = phone;
         if (location !== undefined) user.location = location;
-        if (profilePicture !== undefined) {
-            user.profilePicture = profilePicture;
-        }
+        if (profilePicture !== undefined) user.profilePicture = profilePicture;
 
-        // Update education
+        // Education
         if (education !== undefined) {
-            user.education = education;
+            user.education = {
+                ...(user.education ? user.education.toObject?.() || user.education : {}),
+                ...education
+            };
         }
 
-        // Update selected fields
-        if (selectedFields !== undefined) {
-            user.selectedFields = selectedFields;
-        }
+        // Interests & Assessment
+        const wasAssessmentCompleted = user.assessmentCompleted;
+        const fieldsToSet = selectedFields !== undefined ? selectedFields : interestedFields;
+        const subfieldsToSet = selectedSubfields !== undefined ? selectedSubfields : interestedSubfields;
 
-        // Update selected subfields
-        if (selectedSubfields !== undefined) {
-            user.selectedSubfields = selectedSubfields;
+        if (fieldsToSet !== undefined) user.selectedFields = fieldsToSet;
+        if (subfieldsToSet !== undefined) user.selectedSubfields = subfieldsToSet;
+        if (workInterests !== undefined) user.workInterests = workInterests;
+        if (workPreferences !== undefined) user.workPreferences = workPreferences;
+
+        if (assessmentCompleted !== undefined) {
+            user.assessmentCompleted = assessmentCompleted;
+            if (assessmentCompleted) {
+                user.assessmentCompletedAt = new Date();
+                if (!wasAssessmentCompleted) {
+                    await Activity.create({
+                        user: user._id,
+                        type: "assessment_completed",
+                        description: "Completed career interest selection"
+                    }).catch(() => {});
+                }
+                await Notification.create({
+                    user: user._id,
+                    title: "Interests saved",
+                    message: "Your personalised career matches have been updated based on your selections.",
+                    type: "career"
+                }).catch(() => {});
+            }
         }
 
         const updatedUser = await user.save();
+        await updatedUser.populate([
+            { path: "selectedFields", select: "name" },
+            { path: "selectedSubfields", select: "name" }
+        ]);
+
+        // Log profile updated activity if not assessment
+        if (!assessmentCompleted) {
+            await Activity.create({
+                user: user._id,
+                type: "profile_updated",
+                description: "Updated profile details"
+            }).catch(() => {});
+        }
 
         res.json({
             message: "Profile updated successfully",
-            user: {
-                id: updatedUser._id,
-                name: updatedUser.name,
-                email: updatedUser.email,
-                role: updatedUser.role,
-                education: updatedUser.education,
-                location: updatedUser.location,
-                profilePicture: updatedUser.profilePicture,
-                selectedFields: updatedUser.selectedFields,
-                selectedSubfields: updatedUser.selectedSubfields
-            }
+            user: updatedUser
         });
-
     } catch (error) {
         res.status(500).json({
             message: "Failed to update profile",
@@ -93,8 +122,66 @@ const updateProfile = async (req, res) => {
     }
 };
 
+// Admin: Get all users with optional search and filters
+const getAllUsers = async (req, res) => {
+    try {
+        const { search, role } = req.query;
+        const filter = {};
+
+        if (search) {
+            filter.$or = [
+                { name: { $regex: search, $options: "i" } },
+                { email: { $regex: search, $options: "i" } }
+            ];
+        }
+
+        if (role) {
+            filter.role = role;
+        }
+
+        const users = await User.find(filter)
+            .select("-password")
+            .populate("selectedFields", "name")
+            .sort({ createdAt: -1 });
+
+        res.json({
+            count: users.length,
+            users
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to get users",
+            error: error.message
+        });
+    }
+};
+
+// Admin: Toggle active status
+const toggleUserStatus = async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.isActive = !user.isActive;
+        await user.save();
+
+        res.json({
+            message: `User ${user.isActive ? "activated" : "deactivated"} successfully`,
+            user: { id: user._id, isActive: user.isActive }
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to change user status",
+            error: error.message
+        });
+    }
+};
 
 module.exports = {
     getProfile,
-    updateProfile
+    updateProfile,
+    getAllUsers,
+    toggleUserStatus
 };

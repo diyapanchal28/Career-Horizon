@@ -23,8 +23,28 @@ const userSchema = new mongoose.Schema(
 
         role: {
             type: String,
-            enum: ["student", "admin"],
+            enum: ["student", "user", "admin"],
             default: "student"
+        },
+
+        phone: {
+            type: String,
+            default: ""
+        },
+
+        location: {
+            type: String,
+            default: ""
+        },
+
+        profilePicture: {
+            type: String,
+            default: ""
+        },
+
+        isActive: {
+            type: Boolean,
+            default: true
         },
 
         education: {
@@ -36,6 +56,10 @@ const userSchema = new mongoose.Schema(
                 type: String,
                 default: ""
             },
+            degree: {
+                type: String,
+                default: ""
+            },
             specialization: {
                 type: String,
                 default: ""
@@ -44,19 +68,21 @@ const userSchema = new mongoose.Schema(
                 type: String,
                 default: ""
             },
+            institution: {
+                type: String,
+                default: ""
+            },
+            currentYear: {
+                type: String,
+                default: ""
+            },
+            expectedGraduation: {
+                type: String,
+                default: ""
+            },
             graduationYear: {
                 type: Number
             }
-        },
-
-        location: {
-            type: String,
-            default: ""
-        },
-
-        profilePicture: {
-            type: String,
-            default: ""
         },
 
         selectedFields: [
@@ -71,7 +97,28 @@ const userSchema = new mongoose.Schema(
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Subfield"
             }
-        ]
+        ],
+
+        workInterests: [
+            {
+                type: String
+            }
+        ],
+
+        workPreferences: [
+            {
+                type: String
+            }
+        ],
+
+        assessmentCompleted: {
+            type: Boolean,
+            default: false
+        },
+
+        assessmentCompletedAt: {
+            type: Date
+        }
     },
     {
         timestamps: true

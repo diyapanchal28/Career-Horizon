@@ -14,9 +14,16 @@ const savedCareerSchema = new mongoose.Schema(
             required: true
         }
     },
-    {
-        timestamps: true
-    }
+    { timestamps: true }
 );
 
-module.exports = mongoose.model("SavedCareer", savedCareerSchema);
+// Prevent the same user from saving the same career twice
+savedCareerSchema.index(
+    { user: 1, career: 1 },
+    { unique: true }
+);
+
+module.exports = mongoose.model(
+    "SavedCareer",
+    savedCareerSchema
+);
