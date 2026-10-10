@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
@@ -10,6 +10,7 @@ import {
   SlidersHorizontal,
   Compass,
   Lock,
+  ChevronRight,
 } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
@@ -26,6 +27,10 @@ export default function Careers() {
 
   // Filters state initialized from searchParams
   const [search, setSearch] = useState(() => searchParams.get("search") || "");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const searchWrapperRef = useRef(null);
+
   const [selectedField, setSelectedField] = useState(
     () => searchParams.get("fieldId") || "all"
   );
@@ -44,6 +49,20 @@ export default function Careers() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [savingCareerId, setSavingCareerId] = useState("");
   const [toastMessage, setToastMessage] = useState("");
+
+  // Dismiss suggestions on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        searchWrapperRef.current &&
+        !searchWrapperRef.current.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Fetch initial data
   useEffect(() => {
@@ -90,10 +109,6 @@ export default function Careers() {
     e.preventDefault();
     if (!isAuthenticated) {
       sessionStorage.setItem("returnAfterLogin", `/careers/${careerId}`);
-      sessionStorage.setItem(
-        "authGateMessage",
-        "Sign in or create a free account to view full career details, salary insights, and step-by-step roadmaps."
-      );
       navigate("/login");
       return;
     }
@@ -132,8 +147,80 @@ export default function Careers() {
   };
 
   // Reset all filters
+  // Suggestions filtered by starting alphabet/prefix
+  const suggestions = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return [];
+
+    const startsWithMatches = careers.filter((c) =>
+      (c.name || "").trim().toLowerCase().startsWith(query)
+    );
+
+    if (startsWithMatches.length > 0) {
+      return startsWithMatches.sort((a, b) =>
+        (a.name || "").localeCompare(b.name || "")
+      );
+    }
+
+    const containsMatches = careers.filter((c) =>
+      (c.name || "").toLowerCase().includes(query)
+    );
+    return containsMatches.sort((a, b) =>
+      (a.name || "").localeCompare(b.name || "")
+    );
+  }, [careers, search]);
+
+  const highlightMatch = (text, query) => {
+    if (!text || !query) return text;
+    const lowerText = text.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    const matchIndex = lowerText.indexOf(lowerQuery);
+    if (matchIndex === -1) return text;
+
+    return (
+      <>
+        {text.slice(0, matchIndex)}
+        <span className="search-match-highlight">
+          {text.slice(matchIndex, matchIndex + query.length)}
+        </span>
+        {text.slice(matchIndex + query.length)}
+      </>
+    );
+  };
+
+  const handleSelectSuggestion = (career) => {
+    setSearch(career.name);
+    setShowSuggestions(false);
+  };
+
+  const handleSearchKeyDown = (e) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightedIndex((prev) =>
+        prev < suggestions.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightedIndex((prev) =>
+        prev > 0 ? prev - 1 : suggestions.length - 1
+      );
+    } else if (e.key === "Enter") {
+      if (highlightedIndex >= 0 && highlightedIndex < suggestions.length) {
+        e.preventDefault();
+        handleSelectSuggestion(suggestions[highlightedIndex]);
+      } else {
+        setShowSuggestions(false);
+      }
+    } else if (e.key === "Escape") {
+      setShowSuggestions(false);
+    }
+  };
+
   const handleResetFilters = () => {
     setSearch("");
+    setShowSuggestions(false);
     setSelectedField("all");
     setSelectedSubfield("all");
     setSelectedDemand("all");
@@ -210,6 +297,13 @@ export default function Careers() {
 
     result.sort((a, b) => {
       if (sortBy === "name" || sortBy === "relevant") {
+        if (search.trim()) {
+          const query = search.trim().toLowerCase();
+          const aStarts = (a.name || "").trim().toLowerCase().startsWith(query);
+          const bStarts = (b.name || "").trim().toLowerCase().startsWith(query);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+        }
         return (a.name || "").localeCompare(b.name || "");
       }
       if (sortBy === "popular") {
@@ -262,44 +356,124 @@ export default function Careers() {
         </div>
 
         {/* Full-Width Search Bar */}
-        <form
-          className="pdf-catalog-search-row"
-          onSubmit={(e) => e.preventDefault()}
-        >
-          <div className="pdf-search-input-wrap">
-            <Search size={18} className="pdf-search-icon" />
-            <input
-              type="text"
-              placeholder="Search careers, skills, or fields..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && (
-              <button
-                type="button"
-                className="pdf-search-clear"
-                onClick={() => setSearch("")}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <button type="submit" className="pdf-search-btn">
-            Search
-          </button>
-
-          <button
-            type="button"
-            className="mobile-filter-btn"
-            onClick={() => setShowMobileFilters(true)}
+        <div className="pdf-search-autocomplete-wrapper catalog" ref={searchWrapperRef}>
+          <form
+            className="pdf-catalog-search-row"
+            onSubmit={(e) => {
+              e.preventDefault();
+              setShowSuggestions(false);
+            }}
           >
-            <SlidersHorizontal size={16} />
-            <span>Filters</span>
-            {activeFiltersCount > 0 && (
-              <span className="filter-count-badge">{activeFiltersCount}</span>
-            )}
-          </button>
-        </form>
+            <div className="pdf-search-input-wrap">
+              <Search size={18} className="pdf-search-icon" />
+              <input
+                type="text"
+                placeholder="Search careers, skills, or fields..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setShowSuggestions(true);
+                  setHighlightedIndex(-1);
+                }}
+                onFocus={() => {
+                  if (search.trim()) setShowSuggestions(true);
+                }}
+                onKeyDown={handleSearchKeyDown}
+                autoComplete="off"
+              />
+              {search && (
+                <button
+                  type="button"
+                  className="pdf-search-clear"
+                  onClick={() => {
+                    setSearch("");
+                    setShowSuggestions(false);
+                  }}
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <button type="submit" className="pdf-search-btn">
+              Search
+            </button>
+
+            <button
+              type="button"
+              className="mobile-filter-btn"
+              onClick={() => setShowMobileFilters(true)}
+            >
+              <SlidersHorizontal size={16} />
+              <span>Filters</span>
+              {activeFiltersCount > 0 && (
+                <span className="filter-count-badge">{activeFiltersCount}</span>
+              )}
+            </button>
+          </form>
+
+          {/* Autocomplete Suggestions Dropdown */}
+          {showSuggestions && search.trim() && (
+            <div className="search-suggestions-dropdown" role="listbox">
+              <div className="search-suggestions-header">
+                <span>
+                  {suggestions.length > 0 ? (
+                    <>
+                      Careers starting with "<strong>{search.trim()}</strong>" ({suggestions.length})
+                    </>
+                  ) : (
+                    <>No careers found starting with "{search.trim()}"</>
+                  )}
+                </span>
+                <button
+                  type="button"
+                  className="search-suggestions-close"
+                  onClick={() => setShowSuggestions(false)}
+                  aria-label="Close suggestions"
+                >
+                  ×
+                </button>
+              </div>
+
+              {suggestions.length > 0 ? (
+                <ul className="search-suggestions-list">
+                  {suggestions.map((career, index) => (
+                    <li
+                      key={career._id || career.id || index}
+                      className={`search-suggestion-item ${
+                        highlightedIndex === index ? "highlighted" : ""
+                      }`}
+                      onMouseEnter={() => setHighlightedIndex(index)}
+                      onClick={() => handleSelectSuggestion(career)}
+                      role="option"
+                      aria-selected={highlightedIndex === index}
+                    >
+                      <div className="suggestion-icon-wrap">
+                        <Search size={14} />
+                      </div>
+                      <div className="suggestion-info">
+                        <span className="suggestion-title">
+                          {highlightMatch(career.name, search.trim())}
+                        </span>
+                        {(career.fieldId?.name || career.fieldName) && (
+                          <span className="suggestion-field-tag">
+                            {career.fieldId?.name || career.fieldName}
+                          </span>
+                        )}
+                      </div>
+                      <span className="suggestion-action">
+                        Select <ChevronRight size={14} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="search-suggestions-empty">
+                  <p>Try searching for a different alphabet or career name.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Layout: Left Sidebar Filters + Right Grid */}
         <div className="pdf-catalog-layout">

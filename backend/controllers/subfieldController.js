@@ -28,6 +28,8 @@ const createSubfield = async (req, res) => {
             field
         });
 
+        await subfield.populate("field", "name");
+
         res.status(201).json(subfield);
     } catch (error) {
         res.status(500).json({
@@ -43,8 +45,8 @@ const updateSubfield = async (req, res) => {
         const subfield = await Subfield.findByIdAndUpdate(
             req.params.id,
             req.body,
-            { new: true, runValidators: true }
-        );
+            { returnDocument: 'after', runValidators: true }
+        ).populate("field", "name");
 
         if (!subfield) {
             return res.status(404).json({

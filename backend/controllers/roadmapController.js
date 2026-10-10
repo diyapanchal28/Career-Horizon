@@ -69,12 +69,34 @@ const getCareerRoadmapProgress = async (req, res) => {
             });
         }
 
-        const progress = await RoadmapProgress.findOne({
+        const effectiveCareerId = roadmap.careerId || roadmap.career || careerId;
+
+        let progress = await RoadmapProgress.findOne({
             $or: [
+                { userId, careerId: effectiveCareerId },
                 { userId, careerId },
                 { userId, roadmapId: roadmap._id }
             ]
         });
+
+        if (!progress) {
+            progress = await RoadmapProgress.create({
+                userId,
+                careerId: effectiveCareerId,
+                roadmapId: roadmap._id,
+                completedStepIds: [],
+                startedAt: new Date(),
+                lastActivityAt: new Date()
+            });
+
+            const career = await Career.findById(effectiveCareerId);
+            await Activity.create({
+                user: userId,
+                type: "roadmap_started",
+                career: effectiveCareerId,
+                description: `Started roadmap for ${career?.name || "Career"}`
+            }).catch(() => {});
+        }
 
         const completedStepIds = progress ? (progress.completedStepIds || []).map(String) : [];
         const totalSteps = (roadmap.steps || []).length;
@@ -83,7 +105,7 @@ const getCareerRoadmapProgress = async (req, res) => {
             : 0;
 
         res.json({
-            started: Boolean(progress),
+            started: true,
             progressPercentage,
             completedStepIds,
             totalSteps,
@@ -224,8 +246,20 @@ const getUserActiveRoadmaps = async (req, res) => {
         const activeRoadmaps = [];
 
         for (const prog of progressList) {
-            const roadmap = prog.roadmapId;
-            const career = prog.careerId;
+            let roadmap = prog.roadmapId;
+            let career = prog.careerId;
+
+            if (!roadmap && prog.roadmapId) {
+                roadmap = await Roadmap.findById(prog.roadmapId);
+            }
+
+            if (!career || !career.name) {
+                const targetCareerId = prog.careerId || roadmap?.careerId || roadmap?.career;
+                if (targetCareerId) {
+                    career = await Career.findById(targetCareerId).select("name fieldId subfieldId shortDescription");
+                }
+            }
+
             if (!roadmap || !career) continue;
 
             const steps = roadmap.steps || [];
@@ -262,15 +296,21 @@ const getUserActiveRoadmaps = async (req, res) => {
 // Create a roadmap (Admin)
 const createRoadmap = async (req, res) => {
     try {
-        const { career, careerId, title, steps } = req.body;
+        const { career, careerId, title, summary, steps } = req.body;
         const targetCareerId = career || careerId;
 
         const roadmap = await Roadmap.create({
             career: targetCareerId,
             careerId: targetCareerId,
             title,
-            steps
+            summary: summary || "",
+            steps: Array.isArray(steps) ? steps : []
         });
+
+        await roadmap.populate([
+            { path: "career", select: "name" },
+            { path: "careerId", select: "name" }
+        ]);
 
         res.status(201).json(roadmap);
     } catch (error) {
@@ -284,11 +324,20 @@ const createRoadmap = async (req, res) => {
 // Update a roadmap (Admin)
 const updateRoadmap = async (req, res) => {
     try {
+        const updateData = { ...req.body };
+        if (updateData.career || updateData.careerId) {
+            const targetCareerId = updateData.career || updateData.careerId;
+            updateData.career = targetCareerId;
+            updateData.careerId = targetCareerId;
+        }
+
         const roadmap = await Roadmap.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            { new: true, runValidators: true }
-        );
+            updateData,
+            { returnDocument: 'after', runValidators: true }
+        )
+            .populate("career", "name")
+            .populate("careerId", "name");
 
         if (!roadmap) {
             return res.status(404).json({ message: "Roadmap not found" });

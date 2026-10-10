@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
+import { ArrowLeft } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
 
 export default function CareerFields() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const [fields, setFields] = useState([]);
   const [subfields, setSubfields] = useState([]);
@@ -66,6 +68,18 @@ export default function CareerFields() {
       <Navbar />
 
       <main className="page-container fields-container">
+        <div className="pdf-page-back-row">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="pdf-back-btn"
+            title="Go back"
+          >
+            <ArrowLeft size={15} />
+            <span>Back</span>
+          </button>
+        </div>
+
         <div className="pdf-page-intro">
           <h1>Career fields</h1>
           <p>

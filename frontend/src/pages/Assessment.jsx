@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
-import { Check, AlertCircle } from "lucide-react";
+import { Check, AlertCircle, ArrowLeft } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -274,6 +274,18 @@ export default function Assessment() {
       <Navbar />
 
       <main className="page-container pdf-assessment-container">
+        <div className="pdf-page-back-row">
+          <button
+            type="button"
+            onClick={handleBackStep}
+            className="pdf-back-btn"
+            title="Go back"
+          >
+            <ArrowLeft size={15} />
+            <span>{currentStep === 1 ? "Back to Profile" : "Previous step"}</span>
+          </button>
+        </div>
+
         {/* Header (Matches PDF Page 4 bottom & Page 5) */}
         <div className="pdf-assessment-header">
           <h1>Tell us what interests you</h1>

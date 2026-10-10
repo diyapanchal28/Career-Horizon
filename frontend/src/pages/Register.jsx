@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
-import { AlertCircle, Loader2, Lock } from "lucide-react";
+import { AlertCircle, Loader2, Lock, ArrowLeft } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -19,9 +19,10 @@ export default function Register() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [gateNotice] = useState(
-    () => sessionStorage.getItem("authGateMessage") || ""
-  );
+
+  useEffect(() => {
+    sessionStorage.removeItem("authGateMessage");
+  }, []);
 
   const handleChange = (e) => {
     setForm({
@@ -128,6 +129,18 @@ export default function Register() {
 
       <main className="pdf-auth-main">
         <div className="pdf-auth-container">
+          <div className="pdf-page-back-row auth-back-row">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="pdf-back-btn"
+              title="Go back"
+            >
+              <ArrowLeft size={15} />
+              <span>Back</span>
+            </button>
+          </div>
+
           <div className="pdf-auth-heading">
             <h1>Create your free account</h1>
             <p>
@@ -136,12 +149,7 @@ export default function Register() {
             </p>
           </div>
 
-          {gateNotice && (
-            <div className="pdf-auth-gate-notice">
-              <Lock size={16} />
-              <span>{gateNotice}</span>
-            </div>
-          )}
+
 
           {error && (
             <div className="auth-error-banner" role="alert">
@@ -162,7 +170,7 @@ export default function Register() {
           )}
 
           <div className="pdf-auth-card">
-            <form className="pdf-auth-form" onSubmit={handleSubmit}>
+            <form className="pdf-auth-form" onSubmit={handleSubmit} autoComplete="off">
               <div className="pdf-form-field">
                 <label htmlFor="name">Full name</label>
                 <input
@@ -171,8 +179,8 @@ export default function Register() {
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  placeholder="Kavya"
-                  autoComplete="name"
+                  placeholder="Enter name"
+                  autoComplete="off"
                   required
                 />
               </div>
@@ -185,39 +193,45 @@ export default function Register() {
                   name="email"
                   value={form.email}
                   onChange={handleChange}
-                  placeholder="kavya123@gmail.com"
-                  autoComplete="email"
+                  placeholder="Enter email"
+                  autoComplete="off"
                   required
                 />
               </div>
 
               <div className="pdf-form-field">
                 <label htmlFor="password">Password</label>
-                <input
-                  id="password"
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="••••••••••"
-                  autoComplete="new-password"
-                  required
-                />
+                <div className="pdf-input-with-icon">
+                  <Lock size={16} className="pdf-input-icon" aria-hidden="true" />
+                  <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="Enter password"
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
                 <span className="pdf-field-hint">At least 6 characters</span>
               </div>
 
               <div className="pdf-form-field">
                 <label htmlFor="confirmPassword">Confirm password</label>
-                <input
-                  id="confirmPassword"
-                  type="password"
-                  name="confirmPassword"
-                  value={form.confirmPassword}
-                  onChange={handleChange}
-                  placeholder="••••••••••"
-                  autoComplete="new-password"
-                  required
-                />
+                <div className="pdf-input-with-icon">
+                  <Lock size={16} className="pdf-input-icon" aria-hidden="true" />
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    name="confirmPassword"
+                    value={form.confirmPassword}
+                    onChange={handleChange}
+                    placeholder="Confirm password"
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
               </div>
 
               <button

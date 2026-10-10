@@ -1,14 +1,17 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
-import { AlertCircle, Loader2, Lock } from "lucide-react";
+import { AlertCircle, Loader2, Lock, ArrowLeft } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
+
+  const loginMode = searchParams.get("role") === "admin" ? "admin" : "student";
 
   const [form, setForm] = useState({
     email: "",
@@ -17,9 +20,10 @@ export default function Login() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [gateNotice] = useState(
-    () => sessionStorage.getItem("authGateMessage") || ""
-  );
+
+  useEffect(() => {
+    sessionStorage.removeItem("authGateMessage");
+  }, []);
 
   const handleChange = (e) => {
     setForm({
@@ -65,6 +69,13 @@ export default function Login() {
       login(data.token, data.user);
       sessionStorage.removeItem("authGateMessage");
 
+      // Redirect admin users or Admin Login mode directly to /admin
+      if (data.user?.role === "admin" || loginMode === "admin") {
+        sessionStorage.removeItem("returnAfterLogin");
+        navigate("/admin");
+        return;
+      }
+
       // Check for return path or onboarding flow
       const returnTo = sessionStorage.getItem("returnAfterLogin");
       if (returnTo) {
@@ -101,19 +112,26 @@ export default function Login() {
 
       <main className="pdf-auth-main">
         <div className="pdf-auth-container">
-          <div className="pdf-auth-heading">
-            <h1>Welcome back</h1>
-            <p>
-              Sign in to see your matches, saved careers and roadmap progress.
-            </p>
+          <div className="pdf-page-back-row auth-back-row">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="pdf-back-btn"
+              title="Go back"
+            >
+              <ArrowLeft size={15} />
+              <span>Back</span>
+            </button>
           </div>
 
-          {gateNotice && (
-            <div className="pdf-auth-gate-notice">
-              <Lock size={16} />
-              <span>{gateNotice}</span>
-            </div>
-          )}
+          <div className="pdf-auth-heading">
+            <h1>{loginMode === "admin" ? "Administrator Sign In" : "Student Sign In"}</h1>
+            <p>
+              {loginMode === "admin"
+                ? "Sign in to manage career pathways, industry fields, roadmaps and users."
+                : "Sign in to see your matches, saved careers and roadmap progress."}
+            </p>
+          </div>
 
           {error && (
             <div className="auth-error-banner" role="alert">
@@ -134,33 +152,38 @@ export default function Login() {
           )}
 
           <div className="pdf-auth-card">
-            <form className="pdf-auth-form" onSubmit={handleSubmit}>
+            <form className="pdf-auth-form" onSubmit={handleSubmit} autoComplete="off">
               <div className="pdf-form-field">
-                <label htmlFor="email">Email</label>
+                <label htmlFor="email">
+                  {loginMode === "admin" ? "Admin Email" : "Email"}
+                </label>
                 <input
                   id="email"
                   type="email"
                   name="email"
                   value={form.email}
                   onChange={handleChange}
-                  placeholder="kavya123@gmail.com"
-                  autoComplete="email"
+                  placeholder={loginMode === "admin" ? "admin@careerhorizon.com" : "Enter your email"}
+                  autoComplete="off"
                   required
                 />
               </div>
 
               <div className="pdf-form-field">
                 <label htmlFor="password">Password</label>
-                <input
-                  id="password"
-                  type="password"
-                  name="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="••••••••••"
-                  autoComplete="current-password"
-                  required
-                />
+                <div className="pdf-input-with-icon">
+                  <Lock size={16} className="pdf-input-icon" aria-hidden="true" />
+                  <input
+                    id="password"
+                    type="password"
+                    name="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="Enter your password"
+                    autoComplete="new-password"
+                    required
+                  />
+                </div>
               </div>
 
               <button
@@ -174,18 +197,29 @@ export default function Login() {
                     <span>Signing in...</span>
                   </>
                 ) : (
-                  <span>Sign in</span>
+                  <span>
+                    {loginMode === "admin" ? "Sign in as Admin" : "Sign in as Student"}
+                  </span>
                 )}
               </button>
             </form>
           </div>
 
-          <p className="pdf-auth-switch">
-            New to Career Horizon?{" "}
-            <Link to="/register" className="pdf-auth-switch-link">
-              Create a free account
-            </Link>
-          </p>
+          {loginMode === "admin" ? (
+            <p className="pdf-auth-switch">
+              Are you a student?{" "}
+              <Link to="/login?role=student" className="pdf-auth-switch-link">
+                Student Sign In
+              </Link>
+            </p>
+          ) : (
+            <p className="pdf-auth-switch">
+              New to Career Horizon?{" "}
+              <Link to="/register" className="pdf-auth-switch-link">
+                Create a free account
+              </Link>
+            </p>
+          )}
         </div>
       </main>
     </div>

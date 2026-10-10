@@ -164,12 +164,12 @@ const toggleUserStatus = async (req, res) => {
             return res.status(404).json({ message: "User not found" });
         }
 
-        user.isActive = !user.isActive;
+        user.isActive = user.isActive === false ? true : false;
         await user.save();
 
         res.json({
             message: `User ${user.isActive ? "activated" : "deactivated"} successfully`,
-            user: { id: user._id, isActive: user.isActive }
+            user: { id: user._id, _id: user._id, isActive: user.isActive }
         });
     } catch (error) {
         res.status(500).json({
@@ -179,9 +179,101 @@ const toggleUserStatus = async (req, res) => {
     }
 };
 
+// Admin: Update user role (student <-> admin)
+const updateUserRole = async (req, res) => {
+    try {
+        const { role } = req.body;
+        if (!["student", "user", "admin"].includes(role)) {
+            return res.status(400).json({ message: "Invalid role specified" });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.params.id,
+            { role },
+            { returnDocument: 'after' }
+        ).select("-password");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({
+            message: `User role updated to ${role}`,
+            user
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to update user role",
+            error: error.message
+        });
+    }
+};
+
+// Admin: Delete user
+const deleteUser = async (req, res) => {
+    try {
+        const user = await User.findByIdAndDelete(req.params.id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        res.json({
+            message: "User deleted successfully",
+            id: req.params.id
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to delete user",
+            error: error.message
+        });
+    }
+};
+
+// Enable Admin role for current logged-in user (Demo/Project convenience)
+const promoteSelfToAdmin = async (req, res) => {
+    try {
+        const jwt = require("jsonwebtoken");
+        const user = await User.findByIdAndUpdate(
+            req.user.userId,
+            { role: "admin" },
+            { returnDocument: 'after' }
+        )
+            .select("-password")
+            .populate("selectedFields", "name")
+            .populate("selectedSubfields", "name");
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const token = jwt.sign(
+            {
+                userId: user._id,
+                role: user.role
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+
+        res.json({
+            message: "Administrator access enabled",
+            token,
+            user
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to enable admin access",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getProfile,
     updateProfile,
     getAllUsers,
-    toggleUserStatus
+    toggleUserStatus,
+    updateUserRole,
+    deleteUser,
+    promoteSelfToAdmin
 };

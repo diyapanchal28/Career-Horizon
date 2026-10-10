@@ -37,10 +37,6 @@ export default function CareerDetails() {
   useEffect(() => {
     if (!isAuthenticated) {
       sessionStorage.setItem("returnAfterLogin", `/careers/${id}`);
-      sessionStorage.setItem(
-        "authGateMessage",
-        "Please sign in or create a free account to view full career details, salary insights, and step-by-step roadmaps."
-      );
       navigate("/login");
     }
   }, [isAuthenticated, id, navigate]);
@@ -250,6 +246,18 @@ export default function CareerDetails() {
         {/* Top White Hero Header (Matches PDF Page 6 bottom) */}
         <section className="pdf-detail-top-hero">
           <div className="career-details-container">
+            <div className="pdf-page-back-row">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="pdf-back-btn"
+                title="Go back"
+              >
+                <ArrowLeft size={15} />
+                <span>Back</span>
+              </button>
+            </div>
+
             <div className="pdf-detail-breadcrumb">
               <Link to="/careers">Explore careers</Link>
               <span>/</span>

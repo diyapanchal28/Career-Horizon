@@ -1,8 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
+import { ArrowLeft } from "lucide-react";
 
 export default function About() {
+  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
   return (
@@ -10,6 +12,18 @@ export default function About() {
       <Navbar />
 
       <main className="page-container about-container">
+        <div className="pdf-page-back-row">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="pdf-back-btn"
+            title="Go back"
+          >
+            <ArrowLeft size={15} />
+            <span>Back</span>
+          </button>
+        </div>
+
         {/* Hero Header */}
         <section className="pdf-page-intro">
           <h1>How matching works</h1>

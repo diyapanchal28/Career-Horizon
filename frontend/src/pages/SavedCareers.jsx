@@ -6,6 +6,7 @@ import {
   Search,
   Heart,
   Compass,
+  ArrowLeft,
 } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
@@ -138,6 +139,18 @@ export default function SavedCareers() {
       )}
 
       <main className="page-container saved-careers-container">
+        <div className="pdf-page-back-row">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="pdf-back-btn"
+            title="Go back"
+          >
+            <ArrowLeft size={15} />
+            <span>Back</span>
+          </button>
+        </div>
+
         {/* Header (Matches PDF Page 8 top) */}
         <section className="pdf-page-intro">
           <h1>Saved careers</h1>

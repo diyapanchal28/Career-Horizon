@@ -131,6 +131,11 @@ const createCareer = async (req, res) => {
             image
         });
 
+        await career.populate([
+            { path: "fieldId", select: "name" },
+            { path: "subfieldId", select: "name" }
+        ]);
+
         res.status(201).json(career);
     } catch (error) {
         res.status(500).json({
@@ -146,8 +151,10 @@ const updateCareer = async (req, res) => {
         const career = await Career.findByIdAndUpdate(
             req.params.id,
             req.body,
-            { new: true, runValidators: true }
-        );
+            { returnDocument: 'after', runValidators: true }
+        )
+            .populate("fieldId", "name")
+            .populate("subfieldId", "name");
 
         if (!career) {
             return res.status(404).json({

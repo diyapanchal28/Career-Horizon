@@ -38,7 +38,7 @@ const careerSchema = new mongoose.Schema(
         subfieldId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Subfield",
-            required: true
+            required: false
         },
 
         education: {

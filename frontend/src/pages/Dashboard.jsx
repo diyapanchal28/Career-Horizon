@@ -2,25 +2,9 @@ import { useState, useEffect, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
-import {
-  Heart,
-  Check,
-  ArrowRight,
-  BarChart3,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
-
-function formatActivityDate(dateStr) {
-  if (!dateStr) return "Recent";
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "Recent";
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -29,10 +13,7 @@ export default function Dashboard() {
   const [activeRoadmaps, setActiveRoadmaps] = useState([]);
   const [topMatches, setTopMatches] = useState([]);
   const [activities, setActivities] = useState([]);
-  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAllActivities, setShowAllActivities] = useState(false);
-  const [showAllNotifications, setShowAllNotifications] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -46,11 +27,10 @@ export default function Dashboard() {
         const authToken = token || localStorage.getItem("token");
         const headers = { Authorization: `Bearer ${authToken}` };
 
-        const [roadmapRes, matchRes, actRes, notifRes] = await Promise.all([
+        const [roadmapRes, matchRes, actRes] = await Promise.all([
           fetch(`${API_URL}/roadmaps/user/active`, { headers }),
           fetch(`${API_URL}/recommendations`, { headers }),
           fetch(`${API_URL}/activities`, { headers }),
-          fetch(`${API_URL}/notifications`, { headers }),
         ]);
 
         if (roadmapRes.ok) {
@@ -63,17 +43,12 @@ export default function Dashboard() {
           const list = Array.isArray(mData)
             ? mData
             : mData.recommendations || [];
-          setTopMatches(list.slice(0, 5));
+          setTopMatches(list.slice(0, 3));
         }
 
         if (actRes.ok) {
           const aData = await actRes.json();
           setActivities(Array.isArray(aData) ? aData : []);
-        }
-
-        if (notifRes.ok) {
-          const nData = await notifRes.json();
-          setNotifications(Array.isArray(nData) ? nData : []);
         }
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
@@ -84,19 +59,6 @@ export default function Dashboard() {
 
     fetchDashboardData();
   }, [isAuthenticated, token, navigate]);
-
-  const handleMarkAllRead = async () => {
-    try {
-      const authToken = token || localStorage.getItem("token");
-      await fetch(`${API_URL}/notifications/read-all`, {
-        method: "PUT",
-        headers: { Authorization: `Bearer ${authToken}` },
-      });
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch (err) {
-      console.error("Failed to mark notifications read:", err);
-    }
-  };
 
   // Distinct careers explored (from career_viewed activities or active roadmaps)
   const exploredCareersCount = useMemo(() => {
@@ -114,45 +76,32 @@ export default function Dashboard() {
   }, [activities, activeRoadmaps]);
 
   const savedCount = savedCareers ? savedCareers.length : 0;
-  const primaryRoadmap = activeRoadmaps.length > 0 ? activeRoadmaps[0] : null;
 
-  const roadmapProgressPct = primaryRoadmap
-    ? primaryRoadmap.progressPercentage || 0
-    : 0;
+  // Aggregate roadmap progress across all started career roadmaps
+  const totalCompletedSteps = useMemo(() => {
+    return activeRoadmaps.reduce((acc, r) => acc + (r.completedSteps || 0), 0);
+  }, [activeRoadmaps]);
 
-  const completedStepsDisplay = primaryRoadmap
-    ? `${primaryRoadmap.completedSteps || 0}/${primaryRoadmap.totalSteps || 8}`
-    : "0/0";
+  const totalStepsCount = useMemo(() => {
+    return activeRoadmaps.reduce((acc, r) => acc + (r.totalSteps || 0), 0);
+  }, [activeRoadmaps]);
 
-  const visibleActivities = showAllActivities
-    ? activities
-    : activities.slice(0, 5);
-
-  const visibleNotifications = showAllNotifications
-    ? notifications
-    : notifications.slice(0, 4);
-
-  const getActivityIcon = (type) => {
-    if (type === "career_saved") {
-      return (
-        <span className="pdf-act-icon saved">
-          <Heart size={12} fill="currentColor" />
-        </span>
-      );
+  const overallRoadmapProgressPct = useMemo(() => {
+    if (activeRoadmaps.length === 0) return 0;
+    if (totalStepsCount > 0) {
+      return Math.round((totalCompletedSteps / totalStepsCount) * 100);
     }
-    if (type === "roadmap_completed" || type === "assessment_completed") {
-      return (
-        <span className="pdf-act-icon done">
-          <Check size={12} strokeWidth={3} />
-        </span>
-      );
-    }
-    return (
-      <span className="pdf-act-icon viewed">
-        <ArrowRight size={12} />
-      </span>
+    const avg = activeRoadmaps.reduce(
+      (acc, r) => acc + (r.progressPercentage || 0),
+      0
     );
-  };
+    return Math.round(avg / activeRoadmaps.length);
+  }, [activeRoadmaps, totalCompletedSteps, totalStepsCount]);
+
+  const completedStepsDisplay =
+    activeRoadmaps.length > 0
+      ? `${totalCompletedSteps}/${totalStepsCount}`
+      : "0/0";
 
   if (!isAuthenticated) {
     return null;
@@ -163,7 +112,7 @@ export default function Dashboard() {
       <Navbar />
 
       <main className="page-container pdf-dashboard-container">
-        {/* Greeting Header (Matches PDF Page 8 bottom) */}
+        {/* Greeting Header */}
         <section className="pdf-dash-greeting">
           <h1>Hello, {user?.name || "Student"}</h1>
           <p>Here is where you are, and what to do next.</p>
@@ -185,7 +134,7 @@ export default function Dashboard() {
           </section>
         )}
 
-        {/* 4 Top Stat Cards (Exact match to PDF Page 8 bottom) */}
+        {/* 4 Top Stat Cards */}
         <section className="pdf-dash-stats-grid">
           <div className="pdf-dash-stat-card">
             <span className="pdf-stat-eyebrow">CAREERS EXPLORED</span>
@@ -201,64 +150,82 @@ export default function Dashboard() {
 
           <div className="pdf-dash-stat-card">
             <span className="pdf-stat-eyebrow">ROADMAP PROGRESS</span>
-            <strong className="pdf-stat-value">{roadmapProgressPct}%</strong>
+            <strong className="pdf-stat-value">
+              {overallRoadmapProgressPct}%
+            </strong>
             <span className="pdf-stat-sub">
-              {activeRoadmaps.length} roadmap(s) started
+              {activeRoadmaps.length} roadmap{activeRoadmaps.length === 1 ? "" : "s"} in progress
             </span>
           </div>
 
           <div className="pdf-dash-stat-card">
             <span className="pdf-stat-eyebrow">COMPLETED STEPS</span>
             <strong className="pdf-stat-value">{completedStepsDisplay}</strong>
-            <span className="pdf-stat-sub">Steps completed</span>
+            <span className="pdf-stat-sub">Across all roadmaps</span>
           </div>
         </section>
 
-        {/* Main 2-Column Dashboard Layout (Matches PDF Page 8 bottom) */}
+        {/* Main 2-Column Dashboard Layout */}
         <div className="pdf-dash-main-grid">
-          {/* Left Column */}
+          {/* Left Column: All Active Career Roadmaps + Saved Careers */}
           <div className="pdf-dash-left-col">
-            {/* Continue where you left off */}
+            {/* Show all career roadmaps in which user has progress */}
             <section className="pdf-dash-section">
               <div className="pdf-dash-section-head">
                 <h2>Continue where you left off</h2>
+                {activeRoadmaps.length > 0 && (
+                  <span className="pdf-section-count">
+                    {activeRoadmaps.length} roadmap{activeRoadmaps.length > 1 ? "s" : ""} in progress
+                  </span>
+                )}
               </div>
 
-              {primaryRoadmap ? (
-                <div className="pdf-continue-card">
-                  <div className="pdf-continue-top">
-                    <strong>{primaryRoadmap.careerName}</strong>
-                    <span>
-                      {primaryRoadmap.completedSteps}/
-                      {primaryRoadmap.totalSteps} steps
-                    </span>
-                  </div>
-
-                  <div className="pdf-continue-pct">
-                    {primaryRoadmap.progressPercentage}%
-                  </div>
-
-                  <div className="pdf-progress-bar-track">
+              {activeRoadmaps.length > 0 ? (
+                <div className="pdf-roadmaps-stack">
+                  {activeRoadmaps.map((roadmap) => (
                     <div
-                      className="pdf-progress-bar-fill"
-                      style={{
-                        width: `${primaryRoadmap.progressPercentage}%`,
-                      }}
-                    />
-                  </div>
-
-                  <div className="pdf-continue-next">
-                    Next: <strong>{primaryRoadmap.nextStepTitle}</strong>
-                  </div>
-
-                  <div className="mt-3">
-                    <Link
-                      to={`/roadmaps/${primaryRoadmap.careerId}`}
-                      className="pdf-explore-btn"
+                      key={roadmap.progressId || roadmap.careerId}
+                      className="pdf-continue-card"
                     >
-                      Continue
-                    </Link>
-                  </div>
+                      <div className="pdf-continue-top">
+                        <div>
+                          <strong className="pdf-roadmap-title">
+                            {roadmap.careerName}
+                          </strong>
+                          <span className="pdf-roadmap-step-count">
+                            {roadmap.completedSteps}/{roadmap.totalSteps} steps completed
+                          </span>
+                        </div>
+                        <div className="pdf-continue-pct">
+                          {roadmap.progressPercentage}%
+                        </div>
+                      </div>
+
+                      <div className="pdf-progress-bar-track">
+                        <div
+                          className="pdf-progress-bar-fill"
+                          style={{
+                            width: `${roadmap.progressPercentage}%`,
+                          }}
+                        />
+                      </div>
+
+                      <div className="pdf-continue-next">
+                        <span className="pdf-next-tag">Next step:</span>{" "}
+                        <strong>{roadmap.nextStepTitle}</strong>
+                      </div>
+
+                      <div className="mt-3">
+                        <Link
+                          to={`/roadmaps/${roadmap.careerId}`}
+                          className="pdf-explore-btn"
+                        >
+                          <span>Continue roadmap</span>
+                          <ArrowRight size={14} />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="pdf-continue-card empty">
@@ -274,114 +241,6 @@ export default function Dashboard() {
                   </div>
                 </div>
               )}
-            </section>
-
-            {/* Visual Progress & Match Graph Section */}
-            <section className="pdf-dash-section">
-              <div className="pdf-dash-section-head">
-                <h2>
-                  <BarChart3
-                    size={18}
-                    style={{
-                      display: "inline",
-                      verticalAlign: "text-bottom",
-                      marginRight: "8px",
-                    }}
-                  />
-                  Progress &amp; match graph
-                </h2>
-                <Link to="/matches" className="pdf-section-link">
-                  Full breakdown
-                </Link>
-              </div>
-
-              <div className="pdf-graph-card">
-                <div className="pdf-graph-layout">
-                  {/* Donut Chart for Roadmap Completion */}
-                  <div className="pdf-donut-box">
-                    <svg
-                      viewBox="0 0 120 120"
-                      className="pdf-donut-svg"
-                      aria-label="Roadmap completion graph"
-                    >
-                      <circle
-                        cx="60"
-                        cy="60"
-                        r="48"
-                        fill="none"
-                        stroke="var(--border-light)"
-                        strokeWidth="12"
-                      />
-                      <circle
-                        cx="60"
-                        cy="60"
-                        r="48"
-                        fill="none"
-                        stroke="var(--primary)"
-                        strokeWidth="12"
-                        strokeLinecap="round"
-                        strokeDasharray={`${(roadmapProgressPct / 100) * 301.6} 301.6`}
-                        transform="rotate(-90 60 60)"
-                      />
-                      <text
-                        x="60"
-                        y="56"
-                        textAnchor="middle"
-                        className="pdf-donut-pct"
-                      >
-                        {roadmapProgressPct}%
-                      </text>
-                      <text
-                        x="60"
-                        y="74"
-                        textAnchor="middle"
-                        className="pdf-donut-sub"
-                      >
-                        Roadmap
-                      </text>
-                    </svg>
-                    <span className="pdf-donut-caption">
-                      {primaryRoadmap
-                        ? primaryRoadmap.careerName
-                        : "Overall Progress"}
-                    </span>
-                  </div>
-
-                  {/* Horizontal Bar Graph of Top Career Matches */}
-                  <div className="pdf-bar-chart-box">
-                    <span className="pdf-graph-subtitle">
-                      Career Match Score Distribution
-                    </span>
-                    {topMatches.length > 0 ? (
-                      <div className="pdf-bars-stack">
-                        {topMatches.map((m, idx) => {
-                          const c = m.career || m;
-                          const pct = m.matchPercentage ?? m.score ?? 70;
-                          return (
-                            <div key={c._id || idx} className="pdf-bar-row">
-                              <div className="pdf-bar-label-row">
-                                <span>{c.name}</span>
-                                <strong>{pct}%</strong>
-                              </div>
-                              <div className="pdf-bar-track">
-                                <div
-                                  className="pdf-bar-fill"
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <p className="pdf-empty-note">
-                        Complete your interest selection to view your career
-                        match graph.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
             </section>
 
             {/* Saved Careers Quick View */}
@@ -422,54 +281,10 @@ export default function Dashboard() {
                 </div>
               </section>
             )}
-
-            {/* Recent activity (Exact match to PDF Page 8 bottom left) */}
-            <section className="pdf-dash-section">
-              <div className="pdf-dash-section-head">
-                <h2>Recent activity</h2>
-                {activities.length > 5 && (
-                  <button
-                    type="button"
-                    className="pdf-section-link"
-                    onClick={() => setShowAllActivities((prev) => !prev)}
-                  >
-                    {showAllActivities ? "Show less" : "View all"}
-                  </button>
-                )}
-              </div>
-
-              {loading ? (
-                <div className="pdf-continue-card">
-                  <p>Loading activity...</p>
-                </div>
-              ) : visibleActivities.length > 0 ? (
-                <div className="pdf-activity-stack">
-                  {visibleActivities.map((act, idx) => (
-                    <div key={act._id || idx} className="pdf-activity-row-card">
-                      <div className="pdf-activity-left">
-                        {getActivityIcon(act.type)}
-                        <span>{act.description || "Activity recorded"}</span>
-                      </div>
-                      <span className="pdf-activity-date">
-                        {formatActivityDate(act.createdAt)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="pdf-continue-card">
-                  <p>
-                    No activity recorded yet. Explore a career or start a
-                    roadmap to see your history here.
-                  </p>
-                </div>
-              )}
-            </section>
           </div>
 
-          {/* Right Column: Top matches + Notifications (Matches PDF Page 8 bottom right) */}
+          {/* Right Column: Top 3 Matches */}
           <aside className="pdf-dash-right-col">
-            {/* Top matches */}
             <section className="pdf-dash-section">
               <div className="pdf-dash-section-head">
                 <h2>Top matches</h2>
@@ -479,84 +294,52 @@ export default function Dashboard() {
               </div>
 
               {topMatches.length > 0 ? (
-                <div className="pdf-top-matches-stack">
-                  {topMatches.map((item, idx) => {
-                    const career = item.career || item;
-                    const careerId = career._id || career.id;
-                    const matchScore =
-                      item.matchPercentage ?? item.score ?? 70;
-                    const fieldName =
-                      career.fieldId?.name || career.fieldName || "Business";
-                    const pillTone =
-                      matchScore >= 60 ? "high" : "amber";
+                <>
+                  <div className="pdf-top-matches-stack">
+                    {topMatches.slice(0, 3).map((item, idx) => {
+                      const career = item.career || item;
+                      const careerId = career._id || career.id;
+                      const matchScore =
+                        item.matchPercentage ?? item.score ?? 70;
+                      const fieldName =
+                        career.fieldId?.name || career.fieldName || "Career";
+                      const pillTone =
+                        matchScore >= 60 ? "high" : "amber";
 
-                    return (
-                      <Link
-                        key={careerId || idx}
-                        to={`/careers/${careerId}`}
-                        className="pdf-top-match-card"
-                      >
-                        <div>
-                          <strong>{career.name}</strong>
-                          <span>{fieldName}</span>
-                        </div>
-                        <span className={`pdf-match-pill ${pillTone}`}>
-                          {matchScore}% match
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
+                      return (
+                        <Link
+                          key={careerId || idx}
+                          to={`/careers/${careerId}`}
+                          className="pdf-top-match-card"
+                        >
+                          <div>
+                            <strong>{career.name}</strong>
+                            <span>{fieldName}</span>
+                          </div>
+                          <span className={`pdf-match-pill ${pillTone}`}>
+                            {matchScore}% match
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  <Link
+                    to="/matches"
+                    className="pdf-outline-btn pdf-all-matches-btn"
+                  >
+                    <span>View all matches</span>
+                    <ArrowRight size={14} />
+                  </Link>
+                </>
               ) : (
                 <div className="pdf-continue-card">
                   <p>Select your interests to see your top matches.</p>
-                </div>
-              )}
-            </section>
-
-            {/* Notifications */}
-            <section className="pdf-dash-section">
-              <div className="pdf-dash-section-head">
-                <h2>Notifications</h2>
-                <div style={{ display: "flex", gap: "10px" }}>
-                  {notifications.some((n) => !n.isRead) && (
-                    <button
-                      type="button"
-                      className="pdf-section-link"
-                      onClick={handleMarkAllRead}
-                    >
-                      Mark read
-                    </button>
-                  )}
-                  {notifications.length > 4 && (
-                    <button
-                      type="button"
-                      className="pdf-section-link"
-                      onClick={() => setShowAllNotifications((prev) => !prev)}
-                    >
-                      {showAllNotifications ? "Show less" : "View all"}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {visibleNotifications.length > 0 ? (
-                <div className="pdf-notif-stack">
-                  {visibleNotifications.map((notif, idx) => (
-                    <div
-                      key={notif._id || idx}
-                      className={`pdf-notif-card ${
-                        notif.isRead ? "read" : "unread"
-                      }`}
-                    >
-                      <strong>{notif.title || "Notification"}</strong>
-                      {notif.message && <p>{notif.message}</p>}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="pdf-continue-card">
-                  <p>No notifications right now.</p>
+                  <div className="mt-3">
+                    <Link to="/assessment" className="pdf-explore-btn">
+                      Select interests
+                    </Link>
+                  </div>
                 </div>
               )}
             </section>

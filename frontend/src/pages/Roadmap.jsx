@@ -31,10 +31,6 @@ export default function Roadmap() {
   useEffect(() => {
     if (!isAuthenticated) {
       sessionStorage.setItem("returnAfterLogin", `/roadmaps/${careerId}`);
-      sessionStorage.setItem(
-        "authGateMessage",
-        "Please sign in or create a free account to access interactive career roadmaps and track your step-by-step progress."
-      );
       navigate("/login");
     }
   }, [isAuthenticated, careerId, navigate]);
@@ -187,8 +183,8 @@ export default function Roadmap() {
 
       <main className="page-container pdf-roadmap-container">
         <div className="pdf-roadmap-back-row">
-          <Link to={`/careers/${careerId}`} className="pdf-back-link">
-            <ArrowLeft size={14} />
+          <Link to={`/careers/${careerId}`} className="pdf-back-btn">
+            <ArrowLeft size={15} />
             <span>Back to {career?.name || "Career"}</span>
           </Link>
         </div>

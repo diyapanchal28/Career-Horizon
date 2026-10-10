@@ -5,6 +5,7 @@ import Navbar from "../components/Navbar";
 import {
   Heart,
   ArrowRight,
+  ArrowLeft,
   Check,
   Compass,
   Scale,
@@ -147,6 +148,18 @@ export default function Recommendations() {
       )}
 
       <main className="page-container recommendations-container">
+        <div className="pdf-page-back-row">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="pdf-back-btn"
+            title="Go back"
+          >
+            <ArrowLeft size={15} />
+            <span>Back</span>
+          </button>
+        </div>
+
         {/* Header (Matches PDF Page 6 top) */}
         <section className="pdf-matches-header">
           <div className="pdf-matches-header-top">

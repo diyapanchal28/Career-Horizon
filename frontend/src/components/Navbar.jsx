@@ -14,6 +14,10 @@ import {
   Shield,
   HelpCircle,
   Bell,
+  ChevronDown,
+  ChevronRight,
+  GraduationCap,
+  ShieldCheck,
 } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
@@ -23,6 +27,10 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Login dropdown state (Student / Admin)
+  const [loginDropdownOpen, setLoginDropdownOpen] = useState(false);
+  const loginDropdownRef = useRef(null);
 
   // Notifications dropdown state
   const [notifOpen, setNotifOpen] = useState(false);
@@ -70,6 +78,35 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Close login dropdown on outside click or escape
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        loginDropdownRef.current &&
+        !loginDropdownRef.current.contains(e.target)
+      ) {
+        setLoginDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setLoginDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
+  // Auto-close dropdowns when route changes
+  useEffect(() => {
+    setLoginDropdownOpen(false);
+    setNotifOpen(false);
+  }, [location.pathname]);
 
   const handleMarkAllRead = async () => {
     try {
@@ -140,11 +177,6 @@ export default function Navbar() {
                 }
               >
                 <span>Saved</span>
-                {savedCount > 0 && (
-                  <span className="nav-badge" title={`${savedCount} saved careers`}>
-                    {savedCount}
-                  </span>
-                )}
               </Link>
             </>
           ) : (
@@ -183,16 +215,7 @@ export default function Navbar() {
           {isAuthenticated ? (
             /* USER IS SIGNED IN */
             <div className="user-profile-bar">
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  className="admin-nav-pill-btn"
-                  title="Administrator Panel"
-                >
-                  <Shield size={14} />
-                  <span>Admin</span>
-                </Link>
-              )}
+
 
               {/* Notification Bell Dropdown */}
               <div className="nav-notif-wrapper" ref={notifRef}>
@@ -260,6 +283,17 @@ export default function Navbar() {
                 }
                 title="Your profile"
               >
+                {user?.profilePicture ? (
+                  <img
+                    src={user.profilePicture}
+                    alt={user?.name || "Profile"}
+                    className="nav-user-avatar-tiny"
+                  />
+                ) : (
+                  <span className="nav-user-initial-tiny">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                  </span>
+                )}
                 <span>{user?.name || "Student"}</span>
               </Link>
 
@@ -275,9 +309,70 @@ export default function Navbar() {
           ) : (
             /* USER IS NOT SIGNED IN */
             <div className="guest-actions">
-              <Link to="/login" className="signin-btn">
-                Log in
-              </Link>
+              {/* Shared Login Dropdown (Student / Admin) */}
+              <div className="nav-login-dropdown-wrapper" ref={loginDropdownRef}>
+                <button
+                  type="button"
+                  className={`nav-login-dropdown-btn ${loginDropdownOpen ? "active" : ""}`}
+                  onClick={() => setLoginDropdownOpen((prev) => !prev)}
+                  aria-expanded={loginDropdownOpen}
+                  aria-haspopup="true"
+                  title="Sign in to Career Horizon"
+                >
+                  <span>Login</span>
+                  <ChevronDown
+                    size={14}
+                    className={`nav-login-chevron ${loginDropdownOpen ? "open" : ""}`}
+                  />
+                </button>
+
+                {loginDropdownOpen && (
+                  <div className="nav-login-dropdown-menu" role="menu">
+                    <div className="nav-login-menu-header">
+                      <span>SIGN IN AS</span>
+                    </div>
+
+                    <Link
+                      to="/login?role=student"
+                      className="nav-login-item"
+                      role="menuitem"
+                      onClick={() => setLoginDropdownOpen(false)}
+                    >
+                      <div className="nav-login-icon-box student">
+                        <GraduationCap size={20} />
+                      </div>
+                      <div className="nav-login-text-box">
+                        <span className="nav-login-item-title">Student Login</span>
+                        <span className="nav-login-item-desc">
+                          Access career guidance and your roadmap.
+                        </span>
+                      </div>
+                      <ChevronRight size={16} className="nav-login-item-arrow" />
+                    </Link>
+
+                    <div className="nav-login-divider" />
+
+                    <Link
+                      to="/login?role=admin"
+                      className="nav-login-item"
+                      role="menuitem"
+                      onClick={() => setLoginDropdownOpen(false)}
+                    >
+                      <div className="nav-login-icon-box admin">
+                        <ShieldCheck size={20} />
+                      </div>
+                      <div className="nav-login-text-box">
+                        <span className="nav-login-item-title">Admin Login</span>
+                        <span className="nav-login-item-desc">
+                          Manage students and career content.
+                        </span>
+                      </div>
+                      <ChevronRight size={16} className="nav-login-item-arrow" />
+                    </Link>
+                  </div>
+                )}
+              </div>
+
               <Link to="/register" className="get-started-btn">
                 <span>Create account</span>
               </Link>
@@ -304,7 +399,17 @@ export default function Navbar() {
               <>
                 <div className="mobile-user-card">
                   <div className="user-avatar-circle large">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : <UserIcon size={18} />}
+                    {user?.profilePicture ? (
+                      <img
+                        src={user.profilePicture}
+                        alt={user?.name || "User"}
+                        style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+                      />
+                    ) : user?.name ? (
+                      user.name.charAt(0).toUpperCase()
+                    ) : (
+                      <UserIcon size={18} />
+                    )}
                   </div>
                   <div>
                     <strong className="mobile-user-name">{user?.name || "Student"}</strong>
@@ -345,7 +450,7 @@ export default function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Bookmark size={18} />
-                  <span>Saved ({savedCount})</span>
+                  <span>Saved</span>
                 </Link>
 
                 <Link
@@ -356,17 +461,6 @@ export default function Navbar() {
                   <UserIcon size={18} />
                   <span>Your profile</span>
                 </Link>
-
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    className="mobile-nav-link"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <Shield size={18} />
-                    <span>Admin Panel</span>
-                  </Link>
-                )}
 
                 <button
                   type="button"
@@ -411,18 +505,43 @@ export default function Navbar() {
                   <HelpCircle size={18} />
                   <span>About</span>
                 </Link>
+                <div className="mobile-login-card-stack">
+                  <span className="mobile-login-heading">SIGN IN AS</span>
+                  <Link
+                    to="/login?role=student"
+                    className="mobile-login-role-card"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="nav-login-icon-box student">
+                      <GraduationCap size={18} />
+                    </div>
+                    <div className="nav-login-text-box">
+                      <span className="nav-login-item-title">Student Login</span>
+                      <span className="nav-login-item-desc">Access career guidance & roadmap</span>
+                    </div>
+                    <ChevronRight size={16} className="nav-login-item-arrow" />
+                  </Link>
+
+                  <Link
+                    to="/login?role=admin"
+                    className="mobile-login-role-card"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <div className="nav-login-icon-box admin">
+                      <ShieldCheck size={18} />
+                    </div>
+                    <div className="nav-login-text-box">
+                      <span className="nav-login-item-title">Admin Login</span>
+                      <span className="nav-login-item-desc">Manage students & career content</span>
+                    </div>
+                    <ChevronRight size={16} className="nav-login-item-arrow" />
+                  </Link>
+                </div>
 
                 <div className="mobile-guest-buttons">
                   <Link
-                    to="/login"
-                    className="mobile-signin-btn"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Log in
-                  </Link>
-                  <Link
                     to="/register"
-                    className="mobile-getstarted-btn"
+                    className="mobile-getstarted-btn full-width"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Create account

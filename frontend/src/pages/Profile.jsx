@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Camera, Upload, Trash2, User as UserIcon, ArrowLeft } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -83,6 +83,68 @@ export default function Profile() {
     };
   }, [token]);
 
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("Please select a valid image file (JPG, PNG, or WebP).");
+      return;
+    }
+
+    // Limit to 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage("Image file size should be less than 5MB.");
+      return;
+    }
+
+    setErrorMessage("");
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new window.Image();
+      img.onload = () => {
+        // Optimize & resize image to max 500x500 for crisp avatar display & lightweight storage
+        const maxDim = 500;
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL(
+          file.type === "image/png" ? "image/png" : "image/jpeg",
+          0.88
+        );
+        setFormData((prev) => ({ ...prev, profilePicture: dataUrl }));
+      };
+      img.onerror = () => {
+        setFormData((prev) => ({ ...prev, profilePicture: event.target.result }));
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({ ...prev, profilePicture: "" }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -128,10 +190,15 @@ export default function Profile() {
         } else if (typeof refreshUser === "function") {
           await refreshUser();
         }
-        setSuccessMessage("Profile saved! Continuing to interest selection...");
-        setTimeout(() => {
-          navigate("/assessment");
-        }, 400);
+        
+        if (isOnboarding) {
+          setSuccessMessage("Profile saved! Continuing to interest selection...");
+          setTimeout(() => {
+            navigate("/assessment");
+          }, 500);
+        } else {
+          setSuccessMessage("Profile updated successfully!");
+        }
       } else {
         const data = await res.json().catch(() => ({}));
         setErrorMessage(data.message || "Failed to update profile.");
@@ -160,6 +227,18 @@ export default function Profile() {
       )}
 
       <main className="page-container pdf-profile-container">
+        <div className="pdf-page-back-row">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="pdf-back-btn"
+            title="Go back"
+          >
+            <ArrowLeft size={15} />
+            <span>Back</span>
+          </button>
+        </div>
+
         <div className="pdf-profile-header">
           <h1>Your profile</h1>
           <p>
@@ -186,24 +265,67 @@ export default function Profile() {
           <section className="pdf-profile-card">
             <h2>Basic information</h2>
 
-            <div className="pdf-avatar-url-row">
-              <div className="pdf-avatar-initial">
-                {formData.name
-                  ? formData.name.charAt(0).toUpperCase()
-                  : "U"}
+            <div className="pdf-avatar-upload-section">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png, image/jpeg, image/jpg, image/webp"
+                style={{ display: "none" }}
+                onChange={handleImageUpload}
+              />
+
+              <div
+                className="pdf-avatar-preview-wrapper"
+                onClick={() => fileInputRef.current?.click()}
+                title="Click to choose a photo"
+              >
+                {formData.profilePicture ? (
+                  <img
+                    src={formData.profilePicture}
+                    alt={formData.name || "Profile"}
+                    className="pdf-avatar-preview-img"
+                  />
+                ) : (
+                  <div className="pdf-avatar-preview-placeholder">
+                    {formData.name
+                      ? formData.name.charAt(0).toUpperCase()
+                      : <UserIcon size={28} />}
+                  </div>
+                )}
+                <div className="pdf-avatar-camera-badge" title="Upload photo">
+                  <Camera size={13} />
+                </div>
               </div>
-              <div className="pdf-form-field flex-1">
-                <label htmlFor="profilePicture">
-                  Profile picture URL (optional)
-                </label>
-                <input
-                  type="url"
-                  id="profilePicture"
-                  name="profilePicture"
-                  placeholder="https://..."
-                  value={formData.profilePicture}
-                  onChange={handleChange}
-                />
+
+              <div className="pdf-avatar-controls">
+                <div className="pdf-avatar-label-group">
+                  <span className="pdf-avatar-label">Profile photo</span>
+                  <span className="pdf-avatar-hint">
+                    Upload a JPG, PNG or WebP image from your device (up to 5MB).
+                  </span>
+                </div>
+
+                <div className="pdf-avatar-btn-row">
+                  <button
+                    type="button"
+                    className="pdf-upload-btn"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload size={14} />
+                    <span>{formData.profilePicture ? "Change photo" : "Upload photo"}</span>
+                  </button>
+
+                  {formData.profilePicture && (
+                    <button
+                      type="button"
+                      className="pdf-remove-photo-btn"
+                      onClick={handleRemoveImage}
+                    >
+                      <Trash2 size={14} />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -375,7 +497,7 @@ export default function Profile() {
               className="pdf-explore-btn large"
               disabled={loading}
             >
-              {loading ? "Saving..." : "Save and continue"}
+              {loading ? "Saving..." : (isOnboarding ? "Save and continue" : "Save changes")}
             </button>
           </div>
         </form>

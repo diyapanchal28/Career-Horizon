@@ -40,7 +40,7 @@ const updateField = async (req, res) => {
         const field = await Field.findByIdAndUpdate(
             req.params.id,
             req.body,
-            { new: true, runValidators: true }
+            { returnDocument: 'after', runValidators: true }
         );
 
         if (!field) {
