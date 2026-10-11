@@ -26,58 +26,58 @@ export default function About() {
 
         {/* Hero Header */}
         <section className="pdf-page-intro">
-          <h1>How matching works</h1>
+          <h1>How your match is calculated</h1>
           <p>
             Career Horizon does not guess. Your match percentage is calculated
-            from a fixed set of rules applied to the interests you selected and
-            the data stored against each career. Run it twice with the same
-            answers and you get the same number both times.
+            from a fixed set of rules applied to the fields, specialisations,
+            interests, and activities you selected against the data stored for
+            each career. Run it twice with the same answers and you get the same
+            number both times.
           </p>
         </section>
 
-        {/* 4 Dimension Cards (2x2 Grid matching PDF Page 2) */}
+        {/* 4 Dimension Cards (2x2 Grid) */}
         <section className="pdf-matching-cards-grid">
           <div className="pdf-match-rule-card">
             <div className="pdf-match-rule-top">
-              <h3>Field match</h3>
+              <h3>Field Match</h3>
               <span className="pdf-pts-badge">40 pts</span>
             </div>
             <p>
-              Does this career sit in a field you picked? Your first pick scores
-              highest.
+              Does this career belong to one of your selected fields? Your first
+              choice scores highest (1st = 40, 2nd = 30, 3rd = 20).
             </p>
           </div>
 
           <div className="pdf-match-rule-card">
             <div className="pdf-match-rule-top">
-              <h3>Specialisation match</h3>
+              <h3>Specialisation Match</h3>
               <span className="pdf-pts-badge">30 pts</span>
             </div>
             <p>
-              Does it sit in a subfield you picked? A neighbouring subfield
-              earns partial credit.
+              Does this career match your selected subfield? A neighbouring or
+              related specialisation earns partial credit.
             </p>
           </div>
 
           <div className="pdf-match-rule-card">
             <div className="pdf-match-rule-top">
-              <h3>Work interest match</h3>
+              <h3>Interest Match</h3>
               <span className="pdf-pts-badge">20 pts</span>
             </div>
             <p>
-              How many of the kinds of work you enjoy does this role involve day
-              to day?
+              Does this career involve the things you said you are interested
+              in?
             </p>
           </div>
 
           <div className="pdf-match-rule-card">
             <div className="pdf-match-rule-top">
-              <h3>Work style match</h3>
+              <h3>Activity Match</h3>
               <span className="pdf-pts-badge">10 pts</span>
             </div>
             <p>
-              Does the way you prefer to work fit how this role is usually
-              structured?
+              Does the actual day-to-day work include activities you enjoy?
             </p>
           </div>
         </section>
@@ -86,9 +86,13 @@ export default function About() {
         <section className="pdf-worked-example">
           <h2>A worked example</h2>
           <p>
-            Someone picks Technology as their first field, Data &amp; Analytics
-            as a specialisation, and says they enjoy working with data and
-            problem solving. Against the Data Analyst record, that scores:
+            Someone selects <strong>Technology</strong> as their first field,{" "}
+            <strong>Data &amp; Analytics</strong> as their specialisation, and
+            enjoys{" "}
+            <strong>working with data, problem solving and research</strong>.
+            They also enjoy{" "}
+            <strong>analyzing data and finding solutions</strong>. Against the{" "}
+            <strong>Data Analyst</strong> record, that scores:
           </p>
 
           <div className="pdf-worked-table-wrap">
@@ -112,18 +116,18 @@ export default function About() {
                   <td>30</td>
                 </tr>
                 <tr>
-                  <td>Work interests</td>
-                  <td>20</td>
+                  <td>Interests</td>
+                  <td>18</td>
                   <td>20</td>
                 </tr>
                 <tr>
-                  <td>Work style</td>
-                  <td>10</td>
+                  <td>Activities</td>
+                  <td>8</td>
                   <td>10</td>
                 </tr>
                 <tr className="pdf-worked-total-row">
-                  <td>Total</td>
-                  <td>100%</td>
+                  <td>Total Match</td>
+                  <td>96%</td>
                   <td>100</td>
                 </tr>
               </tbody>

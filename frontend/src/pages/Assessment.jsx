@@ -2,27 +2,292 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
-import { Check, AlertCircle, ArrowLeft } from "lucide-react";
+import {
+  Activity,
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Award,
+  BarChart2,
+  BookOpen,
+  Briefcase,
+  Check,
+  ClipboardList,
+  Code2,
+  Compass,
+  Cpu,
+  Database,
+  Heart,
+  Layers,
+  Layout,
+  Lightbulb,
+  LineChart,
+  MessageSquare,
+  Palette,
+  PenTool,
+  Rocket,
+  Scale,
+  Search,
+  Settings,
+  Shield,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Users,
+} from "lucide-react";
+import {
+  getFieldMeta,
+  getSubfieldMeta,
+} from "../utils/fieldDescriptions";
 
 const API_URL = "http://localhost:5000/api";
 
 const WORK_INTERESTS_OPTIONS = [
-  "Problem Solving",
-  "Working with Data",
-  "Creativity",
-  "Communication",
-  "Technology",
-  "Research",
-  "Management",
-  "Helping People",
+  {
+    id: "Problem Solving",
+    label: "Problem Solving",
+    shortTag: "Logic & Troubleshooting",
+    Icon: Lightbulb,
+    tone: "purple",
+  },
+  {
+    id: "Working with Data",
+    label: "Working with Data",
+    shortTag: "Metrics & Patterns",
+    Icon: BarChart2,
+    tone: "blue",
+  },
+  {
+    id: "Creativity",
+    label: "Creativity",
+    shortTag: "Design & Original Ideas",
+    Icon: Palette,
+    tone: "rose",
+  },
+  {
+    id: "Communication",
+    label: "Communication",
+    shortTag: "Writing & Presenting",
+    Icon: MessageSquare,
+    tone: "violet",
+  },
+  {
+    id: "Technology",
+    label: "Technology",
+    shortTag: "Software & Digital Tools",
+    Icon: Cpu,
+    tone: "indigo",
+  },
+  {
+    id: "Research",
+    label: "Research",
+    shortTag: "Investigation & Study",
+    Icon: Search,
+    tone: "cyan",
+  },
+  {
+    id: "Management",
+    label: "Management",
+    shortTag: "Leadership & Planning",
+    Icon: Briefcase,
+    tone: "amber",
+  },
+  {
+    id: "Helping People",
+    label: "Helping People",
+    shortTag: "Care, Guidance & Impact",
+    Icon: Heart,
+    tone: "teal",
+  },
 ];
 
-const WORK_PREFERENCES_OPTIONS = [
-  "Individual Work",
-  "Team Work",
-  "Client Interaction",
-  "Flexible/Creative Work",
+const WORK_ACTIVITIES_OPTIONS = [
+  {
+    id: "Finding & Solving Problems",
+    title: "Finding & Solving Problems",
+    example:
+      "Diagnosing why a system, process, or workflow isn't working and fixing it",
+    Icon: Settings,
+    tone: "purple",
+  },
+  {
+    id: "Analyzing Data",
+    title: "Analyzing Data",
+    example:
+      "Finding patterns, comparing numbers, and drawing evidence-based conclusions",
+    Icon: LineChart,
+    tone: "blue",
+  },
+  {
+    id: "Creating New Ideas",
+    title: "Creating New Ideas",
+    example:
+      "Brainstorming new concepts, product features, or strategic solutions",
+    Icon: Lightbulb,
+    tone: "amber",
+  },
+  {
+    id: "Designing & Creating",
+    title: "Designing & Creating",
+    example:
+      "Crafting user interfaces, visuals, media assets, or structured content",
+    Icon: PenTool,
+    tone: "rose",
+  },
+  {
+    id: "Building Technology",
+    title: "Building Technology",
+    example:
+      "Writing code, building applications, or configuring digital systems",
+    Icon: Code2,
+    tone: "indigo",
+  },
+  {
+    id: "Research & Investigation",
+    title: "Research & Investigation",
+    example:
+      "Studying domain problems, testing hypotheses, and gathering reliable data",
+    Icon: Search,
+    tone: "cyan",
+  },
+  {
+    id: "Explaining & Communicating",
+    title: "Explaining & Communicating",
+    example:
+      "Presenting findings, teaching others, or translating complex topics clearly",
+    Icon: BookOpen,
+    tone: "teal",
+  },
+  {
+    id: "Planning & Organizing",
+    title: "Planning & Organizing",
+    example:
+      "Structuring workflows, project roadmaps, budgets, and team deliverables",
+    Icon: ClipboardList,
+    tone: "emerald",
+  },
 ];
+
+const PRACTICAL_PROBLEM_STYLES = [
+  {
+    id: "Style:Hands-On Technical Building",
+    title: "Hands-On Technical Building",
+    description:
+      "Write code, configure tools, and build a working prototype to solve the problem",
+    impliedActivity: "Building Technology",
+    Icon: Code2,
+    tone: "purple",
+  },
+  {
+    id: "Style:Evidence & Data-Driven Analysis",
+    title: "Evidence & Data-Driven Analysis",
+    description:
+      "Collect data, run numbers, and let measurable metrics prove the right direction",
+    impliedActivity: "Analyzing Data",
+    Icon: Database,
+    tone: "blue",
+  },
+  {
+    id: "Style:User-Centric Design & Empathy",
+    title: "User-Centric Design & Empathy",
+    description:
+      "Understand user pain points and design an intuitive, human-friendly experience",
+    impliedActivity: "Designing & Creating",
+    Icon: Layout,
+    tone: "rose",
+  },
+  {
+    id: "Style:Structured Strategy & Execution",
+    title: "Structured Strategy & Execution",
+    description:
+      "Break the goal into clear milestones, align resources, and drive delivery",
+    impliedActivity: "Planning & Organizing",
+    Icon: Target,
+    tone: "amber",
+  },
+  {
+    id: "Style:Deep Research & Compliance",
+    title: "Deep Research & Investigation",
+    description:
+      "Investigate regulations, domain literature, or technical root causes thoroughly",
+    impliedActivity: "Research & Investigation",
+    Icon: Shield,
+    tone: "indigo",
+  },
+  {
+    id: "Style:Direct Advisory & Collaboration",
+    title: "Direct Advisory & Collaboration",
+    description:
+      "Work directly with clients, students, or teams to guide and resolve their needs",
+    impliedActivity: "Explaining & Communicating",
+    Icon: Users,
+    tone: "teal",
+  },
+];
+
+const PRACTICAL_CAREER_PRIORITIES = [
+  {
+    id: "Priority:High Market Demand & Rapid Growth",
+    title: "High Market Demand & Rapid Growth",
+    description:
+      "Fast-growing fields with strong hiring momentum and career mobility",
+    Icon: TrendingUp,
+    tone: "emerald",
+  },
+  {
+    id: "Priority:Clear Technical Skill Progression",
+    title: "Clear Technical Skill Progression",
+    description:
+      "Concrete, measurable technical skills, tools, and certifications",
+    Icon: Award,
+    tone: "purple",
+  },
+  {
+    id: "Priority:Creative Freedom & Visual Output",
+    title: "Creative Freedom & Tangible Output",
+    description:
+      "Room to experiment, design, and build a visible portfolio of work",
+    Icon: Sparkles,
+    tone: "rose",
+  },
+  {
+    id: "Priority:Business & Financial Impact",
+    title: "Business & Financial Impact",
+    description:
+      "Driving revenue, investments, operations, or organizational strategy",
+    Icon: Rocket,
+    tone: "blue",
+  },
+  {
+    id: "Priority:Direct Social & Human Impact",
+    title: "Direct Social & Human Impact",
+    description:
+      "Improving healthcare, education, legal fairness, or community wellbeing",
+    Icon: Activity,
+    tone: "teal",
+  },
+  {
+    id: "Priority:Cross-Functional Variety",
+    title: "Cross-Functional Variety",
+    description:
+      "Connecting technology, business, and people rather than one narrow task",
+    Icon: Layers,
+    tone: "indigo",
+  },
+];
+
+const VALID_ACTIVITY_IDS = new Set(WORK_ACTIVITIES_OPTIONS.map((a) => a.id));
+const VALID_STYLE_IDS = new Set(PRACTICAL_PROBLEM_STYLES.map((s) => s.id));
+const VALID_PRIORITY_IDS = new Set(
+  PRACTICAL_CAREER_PRIORITIES.map((p) => p.id)
+);
+
+const MAX_INTERESTS = 5;
+const MAX_ACTIVITIES = 4;
+const MAX_STYLES = 2;
+const MAX_PRIORITIES = 2;
+
+const CHOICE_LABELS = ["1st Choice", "2nd Choice", "3rd Choice"];
 
 export default function Assessment() {
   const navigate = useNavigate();
@@ -38,6 +303,8 @@ export default function Assessment() {
   const [selectedSubfields, setSelectedSubfields] = useState([]);
   const [selectedInterests, setSelectedInterests] = useState([]);
   const [selectedPreferences, setSelectedPreferences] = useState([]);
+  const [selectedStyles, setSelectedStyles] = useState([]);
+  const [selectedPriorities, setSelectedPriorities] = useState([]);
 
   const [validationError, setValidationError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -68,7 +335,6 @@ export default function Assessment() {
         const sData = subfieldRes.ok ? await subfieldRes.json() : [];
 
         const fieldList = Array.isArray(fData) ? fData : fData.fields || [];
-        // Sort fields alphabetically like in PDF Page 4 (Business, Design, Education, Finance, Healthcare, Law, Media, Science, Technology)
         fieldList.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         setFields(fieldList);
         setSubfields(Array.isArray(sData) ? sData : sData.subfields || []);
@@ -99,13 +365,24 @@ export default function Assessment() {
             Array.isArray(user.workInterests) &&
             user.workInterests.length > 0
           ) {
-            setSelectedInterests(user.workInterests);
+            setSelectedInterests(user.workInterests.slice(0, MAX_INTERESTS));
           }
           if (
             Array.isArray(user.workPreferences) &&
             user.workPreferences.length > 0
           ) {
-            setSelectedPreferences(user.workPreferences);
+            const validActivities = user.workPreferences.filter((p) =>
+              VALID_ACTIVITY_IDS.has(p)
+            );
+            const validStyles = user.workPreferences.filter((p) =>
+              VALID_STYLE_IDS.has(p)
+            );
+            const validPriorities = user.workPreferences.filter((p) =>
+              VALID_PRIORITY_IDS.has(p)
+            );
+            setSelectedPreferences(validActivities.slice(0, MAX_ACTIVITIES));
+            setSelectedStyles(validStyles.slice(0, MAX_STYLES));
+            setSelectedPriorities(validPriorities.slice(0, MAX_PRIORITIES));
           }
         }
       } catch (err) {
@@ -125,10 +402,11 @@ export default function Assessment() {
     setSelectedFields((prev) => {
       if (prev.includes(idStr)) {
         const nextFields = prev.filter((id) => id !== idStr);
-        // Also prune subfields belonging to unselected field
         setSelectedSubfields((prevSubs) =>
           prevSubs.filter((subId) => {
-            const subObj = subfields.find((s) => String(s._id) === String(subId));
+            const subObj = subfields.find(
+              (s) => String(s._id) === String(subId)
+            );
             if (!subObj) return true;
             const parentId = String(
               subObj.fieldId?._id || subObj.fieldId || subObj.field || ""
@@ -165,21 +443,67 @@ export default function Assessment() {
     );
   };
 
-  // Step 3: Toggle Work Interest & Preference
-  const toggleInterest = (interest) => {
+  // Step 3: Toggle Interest (up to 5), Activity (up to 4), Problem Style (up to 2), & Priority (up to 2)
+  const toggleInterest = (interestId) => {
     setValidationError("");
-    setSelectedInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest]
-    );
+    setSelectedInterests((prev) => {
+      if (prev.includes(interestId)) {
+        return prev.filter((i) => i !== interestId);
+      }
+      if (prev.length >= MAX_INTERESTS) {
+        setValidationError(`You can select up to ${MAX_INTERESTS} interests.`);
+        return prev;
+      }
+      return [...prev, interestId];
+    });
   };
 
-  const togglePreference = (pref) => {
+  const togglePreference = (activityId) => {
     setValidationError("");
-    setSelectedPreferences((prev) =>
-      prev.includes(pref) ? prev.filter((p) => p !== pref) : [...prev, pref]
-    );
+    setSelectedPreferences((prev) => {
+      if (prev.includes(activityId)) {
+        return prev.filter((p) => p !== activityId);
+      }
+      if (prev.length >= MAX_ACTIVITIES) {
+        setValidationError(
+          `You can select up to ${MAX_ACTIVITIES} activities that sound interesting to you.`
+        );
+        return prev;
+      }
+      return [...prev, activityId];
+    });
+  };
+
+  const toggleStyle = (styleId) => {
+    setValidationError("");
+    setSelectedStyles((prev) => {
+      if (prev.includes(styleId)) {
+        return prev.filter((s) => s !== styleId);
+      }
+      if (prev.length >= MAX_STYLES) {
+        setValidationError(
+          `You can select up to ${MAX_STYLES} problem-solving approaches.`
+        );
+        return prev;
+      }
+      return [...prev, styleId];
+    });
+  };
+
+  const togglePriority = (priorityId) => {
+    setValidationError("");
+    setSelectedPriorities((prev) => {
+      if (prev.includes(priorityId)) {
+        return prev.filter((p) => p !== priorityId);
+      }
+      if (prev.length >= MAX_PRIORITIES) {
+        setValidationError(
+          `You can select up to ${MAX_PRIORITIES} practical career priorities.`
+        );
+        return prev;
+      }
+      return [...prev, priorityId];
+    });
   };
 
   const handleNextStep = () => {
@@ -213,22 +537,42 @@ export default function Assessment() {
 
   const handleSubmitAssessment = async () => {
     if (selectedInterests.length === 0) {
-      setValidationError("Please choose at least one type of work interest.");
+      setValidationError("Please select at least one interest (up to 5).");
       return;
     }
     if (selectedPreferences.length === 0) {
-      setValidationError("Please choose at least one preferred work style.");
+      setValidationError(
+        "Please select at least one activity you would enjoy doing (up to 4)."
+      );
       return;
     }
 
     setSubmitting(true);
     setValidationError("");
 
+    const impliedActivities = selectedStyles
+      .map(
+        (sId) =>
+          PRACTICAL_PROBLEM_STYLES.find((item) => item.id === sId)
+            ?.impliedActivity
+      )
+      .filter(Boolean);
+
+    const combinedActivities = Array.from(
+      new Set([...selectedPreferences, ...impliedActivities])
+    ).slice(0, MAX_ACTIVITIES);
+
+    const combinedPreferences = [
+      ...combinedActivities,
+      ...selectedStyles,
+      ...selectedPriorities,
+    ];
+
     const assessmentPayload = {
       selectedFields,
       selectedSubfields,
       workInterests: selectedInterests,
-      workPreferences: selectedPreferences,
+      workPreferences: combinedPreferences,
       assessmentCompleted: true,
     };
 
@@ -269,6 +613,10 @@ export default function Assessment() {
     }
   };
 
+  const selectedFieldNames = selectedFields
+    .map((fId) => fields.find((f) => String(f._id) === String(fId))?.name)
+    .filter(Boolean);
+
   return (
     <div className="assessment-page">
       <Navbar />
@@ -286,42 +634,69 @@ export default function Assessment() {
           </button>
         </div>
 
-        {/* Header (Matches PDF Page 4 bottom & Page 5) */}
-        <div className="pdf-assessment-header">
+        {/* Creative Hero Banner + Interactive 3-Step Track */}
+        <div className="pdf-assessment-header creative-assessment-hero">
+          <span className="creative-hero-eyebrow">
+            <Sparkles size={13} />
+            <span>PERSONALISED CAREER DISCOVERY</span>
+          </span>
+
           <h1>Tell us what interests you</h1>
           <p>
-            Around ten quick selections. Your answers drive every match
-            percentage you see, and you can change them later.
+            Pick your top fields, specialisations, and work style. Your choices
+            calculate your career match scores and tailor your roadmaps.
           </p>
 
-          {/* 3-Step Pills */}
-          <div className="pdf-step-pills">
+          {/* 3-Step Interactive Pills with Live Badges */}
+          <div className="pdf-step-pills creative-step-track">
             <button
               type="button"
-              className={`pdf-step-pill ${currentStep === 1 ? "active" : ""}`}
+              className={`pdf-step-pill creative-step-btn ${
+                currentStep === 1 ? "active" : ""
+              } ${selectedFields.length > 0 ? "done" : ""}`}
               onClick={() => setCurrentStep(1)}
             >
-              1. Areas of interest
+              <span className="step-num-dot">1</span>
+              <span>Areas of interest</span>
+              <span className="step-count-chip">{selectedFields.length}/3</span>
             </button>
+
             <button
               type="button"
-              className={`pdf-step-pill ${currentStep === 2 ? "active" : ""}`}
+              className={`pdf-step-pill creative-step-btn ${
+                currentStep === 2 ? "active" : ""
+              } ${selectedSubfields.length > 0 ? "done" : ""}`}
               onClick={() => {
                 if (selectedFields.length > 0) setCurrentStep(2);
               }}
             >
-              2. Subfields
+              <span className="step-num-dot">2</span>
+              <span>Subfields</span>
+              <span className="step-count-chip">
+                {selectedSubfields.length}
+              </span>
             </button>
+
             <button
               type="button"
-              className={`pdf-step-pill ${currentStep === 3 ? "active" : ""}`}
+              className={`pdf-step-pill creative-step-btn ${
+                currentStep === 3 ? "active" : ""
+              } ${
+                selectedInterests.length > 0 && selectedPreferences.length > 0
+                  ? "done"
+                  : ""
+              }`}
               onClick={() => {
                 if (selectedFields.length > 0 && selectedSubfields.length > 0) {
                   setCurrentStep(3);
                 }
               }}
             >
-              3. Work style
+              <span className="step-num-dot">3</span>
+              <span>Interests &amp; activities</span>
+              <span className="step-count-chip">
+                {selectedInterests.length + selectedPreferences.length}
+              </span>
             </button>
           </div>
         </div>
@@ -340,44 +715,70 @@ export default function Assessment() {
           </div>
         ) : (
           <div className="pdf-assessment-body">
-            {/* ================= STEP 1: AREAS OF INTEREST (PDF PAGE 4 BOTTOM) ================= */}
+            {/* ================= STEP 1: AREAS OF INTEREST ================= */}
             {currentStep === 1 && (
               <div className="pdf-step-section">
-                <div className="pdf-step-subhead">
-                  <h2>What areas interest you?</h2>
-                  <p>
-                    Pick up to 3. Selected {selectedFields.length}/3.
-                  </p>
+                <div className="pdf-step-subhead creative-section-head">
+                  <div>
+                    <h2>What areas interest you?</h2>
+                    <p>
+                      Pick up to 3 fields in order of preference (1st choice
+                      carries the highest weight).
+                    </p>
+                  </div>
+                  <span className="selection-counter-pill">
+                    {selectedFields.length} of 3 selected
+                  </span>
                 </div>
 
                 <div className="pdf-interest-cards-grid">
                   {fields.map((field) => {
                     const fId = String(field._id);
-                    const isSelected = selectedFields.includes(fId);
+                    const choiceIdx = selectedFields.indexOf(fId);
+                    const isSelected = choiceIdx !== -1;
+                    const meta = getFieldMeta(field);
+                    const FieldIcon = meta.Icon;
+
                     return (
                       <div
                         key={fId}
-                        className={`pdf-selectable-card ${
+                        className={`pdf-selectable-card creative-field-card ${
                           isSelected ? "selected" : ""
                         }`}
                         onClick={() => toggleField(fId)}
                         role="button"
                         tabIndex={0}
                       >
-                        <div className="pdf-selectable-card-top">
-                          <h3>{field.name}</h3>
+                        <div className="creative-card-row">
                           <span
-                            className={`pdf-check-mark ${
-                              isSelected ? "visible" : ""
-                            }`}
+                            className={`creative-theme-icon ${meta.tone}`}
+                            aria-hidden="true"
                           >
-                            <Check size={15} strokeWidth={2.5} />
+                            <FieldIcon size={20} strokeWidth={2.1} />
                           </span>
+
+                          <div className="creative-field-info">
+                            <h3>{field.name}</h3>
+                            <span className="creative-short-tag">
+                              {meta.shortTag}
+                            </span>
+                          </div>
+
+                          <div className="creative-card-right">
+                            {isSelected && (
+                              <span className="choice-rank-pill">
+                                {CHOICE_LABELS[choiceIdx] || "Selected"}
+                              </span>
+                            )}
+                            <span
+                              className={`creative-check-circle ${
+                                isSelected ? "selected" : ""
+                              }`}
+                            >
+                              <Check size={14} strokeWidth={2.8} />
+                            </span>
+                          </div>
                         </div>
-                        <p>
-                          {field.description ||
-                            "Explore career pathways in this field."}
-                        </p>
                       </div>
                     );
                   })}
@@ -385,19 +786,24 @@ export default function Assessment() {
               </div>
             )}
 
-            {/* ================= STEP 2: SUBFIELDS (PDF PAGE 5 TOP) ================= */}
+            {/* ================= STEP 2: SUBFIELDS ================= */}
             {currentStep === 2 && (
               <div className="pdf-step-section">
-                <div className="pdf-step-subhead">
-                  <h2>Which subfields appeal to you?</h2>
-                  <p>
-                    These come from the fields you chose. Selecting a few
-                    sharpens your matches.
-                  </p>
+                <div className="pdf-step-subhead creative-section-head">
+                  <div>
+                    <h2>Which subfields appeal to you?</h2>
+                    <p>
+                      Pick the specialisations that interest you within your
+                      chosen fields.
+                    </p>
+                  </div>
+                  <span className="selection-counter-pill">
+                    {selectedSubfields.length} selected
+                  </span>
                 </div>
 
                 <div className="pdf-subfields-groups">
-                  {selectedFields.map((fieldId) => {
+                  {selectedFields.map((fieldId, idx) => {
                     const fieldObj = fields.find(
                       (f) => String(f._id) === String(fieldId)
                     );
@@ -409,41 +815,74 @@ export default function Assessment() {
                     );
 
                     if (fieldSubs.length === 0) return null;
+                    const parentMeta = getFieldMeta(fieldObj);
+                    const ParentIcon = parentMeta.Icon;
 
                     return (
-                      <div key={fieldId} className="pdf-subfield-group">
-                        <div className="pdf-subfield-group-label">
-                          {(fieldObj?.name || "FIELD").toUpperCase()}
+                      <div
+                        key={fieldId}
+                        className="pdf-subfield-group creative-subfield-box"
+                      >
+                        <div className="pdf-subfield-group-head">
+                          <div className="pdf-subfield-group-label">
+                            <span
+                              className={`creative-theme-icon tiny ${parentMeta.tone}`}
+                            >
+                              <ParentIcon size={14} strokeWidth={2.2} />
+                            </span>
+                            <span>
+                              {(fieldObj?.name || "FIELD").toUpperCase()}
+                            </span>
+                            <span className="subfield-group-tag-pill">
+                              {parentMeta.shortTag}
+                            </span>
+                          </div>
+                          <span className="choice-rank-pill subtle">
+                            {CHOICE_LABELS[idx] || `Field ${idx + 1}`}
+                          </span>
                         </div>
 
                         <div className="pdf-interest-cards-grid">
                           {fieldSubs.map((sub) => {
                             const sId = String(sub._id);
                             const isSelected = selectedSubfields.includes(sId);
+                            const subMeta = getSubfieldMeta(
+                              sub,
+                              fieldObj?.name || ""
+                            );
+                            const SubIcon = subMeta.Icon;
+
                             return (
                               <div
                                 key={sId}
-                                className={`pdf-selectable-card ${
+                                className={`pdf-selectable-card creative-field-card ${
                                   isSelected ? "selected" : ""
                                 }`}
                                 onClick={() => toggleSubfield(sId)}
                                 role="button"
                                 tabIndex={0}
                               >
-                                <div className="pdf-selectable-card-top">
-                                  <h3>{sub.name}</h3>
+                                <div className="creative-card-row">
                                   <span
-                                    className={`pdf-check-mark ${
-                                      isSelected ? "visible" : ""
+                                    className={`creative-theme-icon ${subMeta.tone}`}
+                                    aria-hidden="true"
+                                  >
+                                    <SubIcon size={19} strokeWidth={2.1} />
+                                  </span>
+                                  <div className="creative-field-info">
+                                    <h3>{sub.name}</h3>
+                                    <span className="creative-short-tag">
+                                      {subMeta.shortTag}
+                                    </span>
+                                  </div>
+                                  <span
+                                    className={`creative-check-circle ${
+                                      isSelected ? "selected" : ""
                                     }`}
                                   >
-                                    <Check size={15} strokeWidth={2.5} />
+                                    <Check size={14} strokeWidth={2.8} />
                                   </span>
                                 </div>
-                                <p>
-                                  {sub.description ||
-                                    `Roles and paths in ${sub.name}.`}
-                                </p>
                               </div>
                             );
                           })}
@@ -455,68 +894,288 @@ export default function Assessment() {
               </div>
             )}
 
-            {/* ================= STEP 3: WORK STYLE (PDF PAGE 5 BOTTOM) ================= */}
+            {/* ================= STEP 3: INTERESTS & PRACTICAL ACTIVITIES ================= */}
             {currentStep === 3 && (
               <div className="pdf-step-section">
-                <div className="pdf-step-subhead">
-                  <h2>What type of work interests you?</h2>
+                {/* 1. Core Interests */}
+                <div className="pdf-step-subhead creative-section-head">
+                  <div>
+                    <h2>What subjects or areas interest you?</h2>
+                    <p>
+                      Select up to {MAX_INTERESTS} core themes that attract you.
+                    </p>
+                  </div>
+                  <span className="selection-counter-pill">
+                    {selectedInterests.length} of {MAX_INTERESTS} selected
+                  </span>
                 </div>
 
-                <div className="pdf-work-type-grid">
+                <div className="pdf-interest-cards-grid">
                   {WORK_INTERESTS_OPTIONS.map((item) => {
-                    const isSelected = selectedInterests.includes(item);
+                    const isSelected = selectedInterests.includes(item.id);
+                    const ItemIcon = item.Icon;
                     return (
                       <div
-                        key={item}
-                        className={`pdf-compact-select-card ${
+                        key={item.id}
+                        className={`pdf-selectable-card creative-field-card ${
                           isSelected ? "selected" : ""
                         }`}
-                        onClick={() => toggleInterest(item)}
+                        onClick={() => toggleInterest(item.id)}
                         role="button"
                         tabIndex={0}
                       >
-                        <strong>{item}</strong>
-                        <span
-                          className={`pdf-check-mark ${
-                            isSelected ? "visible" : "faint"
-                          }`}
-                        >
-                          <Check size={14} strokeWidth={2.5} />
-                        </span>
+                        <div className="creative-card-row">
+                          <span
+                            className={`creative-theme-icon ${item.tone}`}
+                            aria-hidden="true"
+                          >
+                            <ItemIcon size={19} strokeWidth={2.1} />
+                          </span>
+                          <div className="creative-field-info">
+                            <h3>{item.label}</h3>
+                            <span className="creative-short-tag">
+                              {item.shortTag}
+                            </span>
+                          </div>
+                          <span
+                            className={`creative-check-circle ${
+                              isSelected ? "selected" : ""
+                            }`}
+                          >
+                            <Check size={14} strokeWidth={2.8} />
+                          </span>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
 
-                <div className="pdf-step-subhead mt-8">
-                  <h2>Preferred work style</h2>
+                {/* 2. Day-to-Day Work Activities (Theme Icons, No Emojis) */}
+                <div className="pdf-step-subhead creative-section-head mt-8">
+                  <div>
+                    <h2>What kind of work do you enjoy?</h2>
+                    <p>
+                      Select up to {MAX_ACTIVITIES} practical day-to-day
+                      activities you would enjoy doing.
+                    </p>
+                  </div>
+                  <span className="selection-counter-pill">
+                    {selectedPreferences.length} of {MAX_ACTIVITIES} selected
+                  </span>
                 </div>
 
-                <div className="pdf-work-style-grid">
-                  {WORK_PREFERENCES_OPTIONS.map((item) => {
-                    const isSelected = selectedPreferences.includes(item);
+                <div className="pdf-activities-grid">
+                  {WORK_ACTIVITIES_OPTIONS.map((activity) => {
+                    const isSelected = selectedPreferences.includes(
+                      activity.id
+                    );
+                    const ActIcon = activity.Icon;
                     return (
                       <div
-                        key={item}
-                        className={`pdf-compact-select-card ${
+                        key={activity.id}
+                        className={`pdf-selectable-card creative-activity-card ${
                           isSelected ? "selected" : ""
                         }`}
-                        onClick={() => togglePreference(item)}
+                        onClick={() => togglePreference(activity.id)}
                         role="button"
                         tabIndex={0}
                       >
-                        <strong>{item}</strong>
-                        <span
-                          className={`pdf-check-mark ${
-                            isSelected ? "visible" : "faint"
-                          }`}
-                        >
-                          <Check size={14} strokeWidth={2.5} />
-                        </span>
+                        <div className="creative-card-row align-start">
+                          <span
+                            className={`creative-theme-icon ${activity.tone}`}
+                            aria-hidden="true"
+                          >
+                            <ActIcon size={19} strokeWidth={2.1} />
+                          </span>
+                          <div className="creative-field-info">
+                            <h3>{activity.title}</h3>
+                            <p className="creative-activity-desc">
+                              {activity.example}
+                            </p>
+                          </div>
+                          <span
+                            className={`creative-check-circle ${
+                              isSelected ? "selected" : ""
+                            }`}
+                          >
+                            <Check size={14} strokeWidth={2.8} />
+                          </span>
+                        </div>
                       </div>
                     );
                   })}
                 </div>
+
+                {/* 3. Practical Problem-Solving Approach */}
+                <div className="pdf-step-subhead creative-section-head mt-8">
+                  <div>
+                    <h2>How do you prefer to solve a real-world problem?</h2>
+                    <p>
+                      Pick up to {MAX_STYLES} practical approaches that feel
+                      most natural to you when tackling a project.
+                    </p>
+                  </div>
+                  <span className="selection-counter-pill">
+                    {selectedStyles.length} of {MAX_STYLES} selected
+                  </span>
+                </div>
+
+                <div className="pdf-activities-grid">
+                  {PRACTICAL_PROBLEM_STYLES.map((styleItem) => {
+                    const isSelected = selectedStyles.includes(styleItem.id);
+                    const StyleIcon = styleItem.Icon;
+                    return (
+                      <div
+                        key={styleItem.id}
+                        className={`pdf-selectable-card creative-activity-card ${
+                          isSelected ? "selected" : ""
+                        }`}
+                        onClick={() => toggleStyle(styleItem.id)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className="creative-card-row align-start">
+                          <span
+                            className={`creative-theme-icon ${styleItem.tone}`}
+                            aria-hidden="true"
+                          >
+                            <StyleIcon size={19} strokeWidth={2.1} />
+                          </span>
+                          <div className="creative-field-info">
+                            <h3>{styleItem.title}</h3>
+                            <p className="creative-activity-desc">
+                              {styleItem.description}
+                            </p>
+                          </div>
+                          <span
+                            className={`creative-check-circle ${
+                              isSelected ? "selected" : ""
+                            }`}
+                          >
+                            <Check size={14} strokeWidth={2.8} />
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* 4. Practical Career Priorities */}
+                <div className="pdf-step-subhead creative-section-head mt-8">
+                  <div>
+                    <h2>
+                      What practical factors matter most to you in a career?
+                    </h2>
+                    <p>
+                      Pick up to {MAX_PRIORITIES} outcomes that are most
+                      important for your career direction.
+                    </p>
+                  </div>
+                  <span className="selection-counter-pill">
+                    {selectedPriorities.length} of {MAX_PRIORITIES} selected
+                  </span>
+                </div>
+
+                <div className="pdf-activities-grid">
+                  {PRACTICAL_CAREER_PRIORITIES.map((priorityItem) => {
+                    const isSelected = selectedPriorities.includes(
+                      priorityItem.id
+                    );
+                    const PrioIcon = priorityItem.Icon;
+                    return (
+                      <div
+                        key={priorityItem.id}
+                        className={`pdf-selectable-card creative-activity-card ${
+                          isSelected ? "selected" : ""
+                        }`}
+                        onClick={() => togglePriority(priorityItem.id)}
+                        role="button"
+                        tabIndex={0}
+                      >
+                        <div className="creative-card-row align-start">
+                          <span
+                            className={`creative-theme-icon ${priorityItem.tone}`}
+                            aria-hidden="true"
+                          >
+                            <PrioIcon size={19} strokeWidth={2.1} />
+                          </span>
+                          <div className="creative-field-info">
+                            <h3>{priorityItem.title}</h3>
+                            <p className="creative-activity-desc">
+                              {priorityItem.description}
+                            </p>
+                          </div>
+                          <span
+                            className={`creative-check-circle ${
+                              isSelected ? "selected" : ""
+                            }`}
+                          >
+                            <Check size={14} strokeWidth={2.8} />
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Live Practical Profile Summary Box */}
+                {(selectedInterests.length > 0 ||
+                  selectedPreferences.length > 0 ||
+                  selectedStyles.length > 0 ||
+                  selectedPriorities.length > 0) && (
+                  <div className="assessment-practical-summary-card mt-8">
+                    <div className="assessment-summary-header">
+                      <strong>Your Practical Interest Snapshot</strong>
+                      <span>
+                        Used to rank careers by field (40%), specialisation
+                        (30%), interests (20%), and practical activities (10%)
+                      </span>
+                    </div>
+                    <div className="assessment-summary-grid">
+                      <div>
+                        <span className="summary-label">Selected Fields</span>
+                        <p>
+                          {selectedFieldNames.length > 0
+                            ? selectedFieldNames.join(", ")
+                            : "None selected"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="summary-label">Core Interests</span>
+                        <p>
+                          {selectedInterests.length > 0
+                            ? selectedInterests.join(", ")
+                            : "Select at least 1 above"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="summary-label">
+                          Preferred Work &amp; Problem Style
+                        </span>
+                        <p>
+                          {[
+                            ...selectedPreferences,
+                            ...selectedStyles.map((s) =>
+                              s.replace(/^Style:/, "")
+                            ),
+                          ].join(", ") || "Select at least 1 activity above"}
+                        </p>
+                      </div>
+                      {selectedPriorities.length > 0 && (
+                        <div>
+                          <span className="summary-label">
+                            Career Priorities
+                          </span>
+                          <p>
+                            {selectedPriorities
+                              .map((p) => p.replace(/^Priority:/, ""))
+                              .join(", ")}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -537,7 +1196,8 @@ export default function Assessment() {
                   className="pdf-explore-btn large"
                   onClick={handleNextStep}
                 >
-                  Continue
+                  <span>Continue</span>
+                  <ArrowRight size={15} />
                 </button>
               ) : (
                 <button
@@ -546,7 +1206,10 @@ export default function Assessment() {
                   onClick={handleSubmitAssessment}
                   disabled={submitting}
                 >
-                  {submitting ? "Saving..." : "Save and see my matches"}
+                  <span>
+                    {submitting ? "Saving..." : "Save and see my matches"}
+                  </span>
+                  <ArrowRight size={15} />
                 </button>
               )}
             </div>

@@ -263,13 +263,56 @@ const getUserActiveRoadmaps = async (req, res) => {
             if (!roadmap || !career) continue;
 
             const steps = roadmap.steps || [];
-            const completedCount = (prog.completedStepIds || []).length;
+            const completedSet = new Set((prog.completedStepIds || []).map(String));
             const totalSteps = steps.length;
+            const completedCount = steps.filter((s, idx) =>
+                completedSet.has(String(s._id)) ||
+                completedSet.has(String(s.stepNumber || idx + 1))
+            ).length;
             const percentage = totalSteps > 0 ? Math.round((completedCount / totalSteps) * 100) : 0;
 
+            // Compute per-level progress (Beginner, Intermediate, Advanced)
+            const third = Math.max(1, Math.ceil(totalSteps / 3));
+            const levelBuckets = {
+                Beginner: { completed: 0, total: 0 },
+                Intermediate: { completed: 0, total: 0 },
+                Advanced: { completed: 0, total: 0 }
+            };
+
+            steps.forEach((s, idx) => {
+                let lvl = s.level;
+                if (lvl !== "Beginner" && lvl !== "Intermediate" && lvl !== "Advanced") {
+                    if (idx < third) lvl = "Beginner";
+                    else if (idx < third * 2) lvl = "Intermediate";
+                    else lvl = "Advanced";
+                }
+                levelBuckets[lvl].total += 1;
+                const isDone =
+                    completedSet.has(String(s._id)) ||
+                    completedSet.has(String(s.stepNumber || idx + 1));
+                if (isDone) {
+                    levelBuckets[lvl].completed += 1;
+                }
+            });
+
+            const levelProgress = ["Beginner", "Intermediate", "Advanced"].map((lvl) => {
+                const { completed, total } = levelBuckets[lvl];
+                const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+                return {
+                    level: lvl,
+                    completed,
+                    total,
+                    pct,
+                    isCompleted: total > 0 && completed === total
+                };
+            });
+
             // Find next incomplete step
-            const completedSet = new Set((prog.completedStepIds || []).map(String));
-            const nextStep = steps.find((s) => !completedSet.has(String(s._id)));
+            const nextStep = steps.find(
+                (s, idx) =>
+                    !completedSet.has(String(s._id)) &&
+                    !completedSet.has(String(s.stepNumber || idx + 1))
+            );
 
             activeRoadmaps.push({
                 progressId: prog._id,
@@ -278,6 +321,7 @@ const getUserActiveRoadmaps = async (req, res) => {
                 completedSteps: completedCount,
                 totalSteps,
                 progressPercentage: percentage,
+                levelProgress,
                 nextStepTitle: nextStep ? nextStep.title : "All steps completed!",
                 lastActivityAt: prog.lastActivityAt
             });

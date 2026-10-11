@@ -33,6 +33,22 @@ const roadmapStepSchema = new mongoose.Schema(
         estimatedWeeks: {
             type: Number,
             default: 4
+        },
+        level: {
+            type: String,
+            enum: ["Beginner", "Intermediate", "Advanced"],
+            default: "Beginner"
+        },
+        courses: {
+            type: [
+                {
+                    title: { type: String, default: "" },
+                    provider: { type: String, default: "" },
+                    url: { type: String, default: "" },
+                    duration: { type: String, default: "" }
+                }
+            ],
+            default: []
         }
     },
     { _id: true }

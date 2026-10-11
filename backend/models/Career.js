@@ -23,11 +23,10 @@ const careerSchema = new mongoose.Schema(
             default: ""
         },
 
-        suitableFor: [
-            {
-                type: String
-            }
-        ],
+        suitableFor: {
+            type: mongoose.Schema.Types.Mixed,
+            default: ""
+        },
 
         fieldId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -140,13 +139,13 @@ const careerSchema = new mongoose.Schema(
 
         careerGrowth: [
             {
-                type: String
+                type: mongoose.Schema.Types.Mixed
             }
         ],
 
         sources: [
             {
-                type: String
+                type: mongoose.Schema.Types.Mixed
             }
         ],
 

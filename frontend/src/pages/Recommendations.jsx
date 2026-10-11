@@ -171,8 +171,8 @@ export default function Recommendations() {
                 not a guarantee of suitability.
               </p>
               <p className="pdf-scoring-line">
-                Scoring: field match 40% · subfield match 30% · work interest
-                20% · work preference 10%.{" "}
+                Scoring: field match 40% · specialisation match 30% · interest
+                match 20% · activity match 10%.{" "}
                 <Link to="/about" className="pdf-inline-cta">
                   How this works
                 </Link>

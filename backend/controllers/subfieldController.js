@@ -5,6 +5,7 @@ const getSubfields = async (req, res) => {
     try {
         const subfields = await Subfield.find()
             .populate("field", "name")
+            .populate("fieldId", "name")
             .sort({ name: 1 });
 
         res.json(subfields);
@@ -20,15 +21,18 @@ const getSubfields = async (req, res) => {
 // Create a subfield
 const createSubfield = async (req, res) => {
     try {
-        const { name, description, field } = req.body;
+        const { name, description, field, fieldId } = req.body;
+        const resolvedField = field || fieldId;
 
         const subfield = await Subfield.create({
             name,
             description,
-            field
+            field: resolvedField,
+            fieldId: resolvedField
         });
 
         await subfield.populate("field", "name");
+        await subfield.populate("fieldId", "name");
 
         res.status(201).json(subfield);
     } catch (error) {
@@ -42,11 +46,20 @@ const createSubfield = async (req, res) => {
 // Update a subfield
 const updateSubfield = async (req, res) => {
     try {
+        const updatePayload = { ...req.body };
+        if (updatePayload.field && !updatePayload.fieldId) {
+            updatePayload.fieldId = updatePayload.field;
+        } else if (updatePayload.fieldId && !updatePayload.field) {
+            updatePayload.field = updatePayload.fieldId;
+        }
+
         const subfield = await Subfield.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            updatePayload,
             { returnDocument: 'after', runValidators: true }
-        ).populate("field", "name");
+        )
+            .populate("field", "name")
+            .populate("fieldId", "name");
 
         if (!subfield) {
             return res.status(404).json({

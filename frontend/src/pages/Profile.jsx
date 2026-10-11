@@ -477,11 +477,11 @@ export default function Profile() {
           {/* Card 3: Interests and preferences (Matches PDF Page 4 top) */}
           <section className="pdf-profile-card pdf-interests-row-card">
             <div>
-              <h2>Interests and preferences</h2>
+              <h2>Interests and activities</h2>
               <p className="pdf-card-sub mb-0">
                 {hasSelectedInterests
-                  ? `You have selected ${user?.selectedFields?.length || 0} field(s), ${user?.selectedSubfields?.length || 0} subfield(s), and ${user?.workInterests?.length || 0} work interest(s).`
-                  : "You have not selected your interests yet."}
+                  ? `You have selected ${user?.selectedFields?.length || 0} field(s), ${user?.selectedSubfields?.length || 0} subfield(s), ${user?.workInterests?.length || 0} interest(s), and ${user?.workPreferences?.length || 0} activity preference(s).`
+                  : "You have not selected your interests and activities yet."}
               </p>
             </div>
 

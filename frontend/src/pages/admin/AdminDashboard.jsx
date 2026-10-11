@@ -19,7 +19,6 @@ import {
   UserCheck,
   UserX,
   ExternalLink,
-  FolderGit2,
 } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
@@ -71,7 +70,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { isAuthenticated, user, token, login } = useAuth();
 
-  const [activeTab, setActiveTab] = useState("overview"); // overview, careers, fields, roadmaps, users
+  const [activeTab, setActiveTab] = useState("careers"); // careers, fields, roadmaps, users
   const [loading, setLoading] = useState(true);
   const [promotingAdmin, setPromotingAdmin] = useState(false);
 
@@ -696,30 +695,6 @@ export default function AdminDashboard() {
   /* ========================================================================
      4. USER MANAGEMENT HANDLERS
      ======================================================================== */
-  const handleToggleUserRole = async (targetUser) => {
-    const nextRole = targetUser.role === "admin" ? "student" : "admin";
-    try {
-      const res = await fetch(`${API_URL}/users/${targetUser._id}/role`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ role: nextRole }),
-      });
-      if (res.ok) {
-        setUsersList((prev) =>
-          prev.map((u) =>
-            u._id === targetUser._id ? { ...u, role: nextRole } : u
-          )
-        );
-        showToast(`Updated ${targetUser.name}'s role to ${nextRole}.`);
-      }
-    } catch (err) {
-      console.error("Failed to update user role:", err);
-    }
-  };
-
   const handleToggleUserStatus = async (targetUser) => {
     try {
       const res = await fetch(`${API_URL}/users/${targetUser._id}/status`, {
@@ -817,36 +792,17 @@ export default function AdminDashboard() {
       )}
 
       <main className="page-container admin-container">
-        {/* Admin Header */}
+        {/* Minimal Admin Header */}
         <section className="admin-header-bar">
           <div className="admin-title-box">
             <div className="admin-badge">
               <Shield size={14} />
-              <span>ADMINISTRATOR CONTROL PANEL</span>
+              <span>ADMIN PANEL</span>
             </div>
-            <h1>Platform Administration</h1>
+            <h1>Platform Management</h1>
             <p>
-              Manage career pathways, industry fields, subfields, milestone roadmaps, and user accounts.
+              Select a section below to manage careers, fields &amp; subfields, roadmaps, or users.
             </p>
-          </div>
-
-          <div className="admin-header-quick-btns">
-            <button
-              type="button"
-              className="primary-btn"
-              onClick={openAddCareerModal}
-            >
-              <Plus size={16} />
-              <span>New Career</span>
-            </button>
-            <button
-              type="button"
-              className="secondary-btn"
-              onClick={openAddRoadmapModal}
-            >
-              <Plus size={16} />
-              <span>New Roadmap</span>
-            </button>
           </div>
         </section>
 
@@ -860,42 +816,80 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Tabs Bar */}
-        <div className="admin-tabs-bar">
+        {/* Unified 4-Section Navigation Cards (No Duplicate Links) */}
+        <div className="admin-nav-cards-grid" role="tablist">
           <button
             type="button"
-            className={`admin-tab-btn ${activeTab === "overview" ? "active" : ""}`}
-            onClick={() => setActiveTab("overview")}
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            className={`admin-tab-btn ${activeTab === "careers" ? "active" : ""}`}
+            role="tab"
+            aria-selected={activeTab === "careers"}
+            className={`admin-stat-card clickable ${
+              activeTab === "careers" ? "active-card" : ""
+            }`}
             onClick={() => setActiveTab("careers")}
           >
-            Careers ({careers.length})
+            <div className="stat-icon purple">
+              <Briefcase size={20} />
+            </div>
+            <div className="stat-details">
+              <span className="stat-number">{careers.length}</span>
+              <span className="stat-label">Careers</span>
+            </div>
           </button>
+
           <button
             type="button"
-            className={`admin-tab-btn ${activeTab === "fields" ? "active" : ""}`}
+            role="tab"
+            aria-selected={activeTab === "fields"}
+            className={`admin-stat-card clickable ${
+              activeTab === "fields" ? "active-card" : ""
+            }`}
             onClick={() => setActiveTab("fields")}
           >
-            Fields & Subfields ({fields.length} / {subfields.length})
+            <div className="stat-icon blue">
+              <Layers size={20} />
+            </div>
+            <div className="stat-details">
+              <span className="stat-number">
+                {fields.length} <small>/ {subfields.length}</small>
+              </span>
+              <span className="stat-label">Fields &amp; Subfields</span>
+            </div>
           </button>
+
           <button
             type="button"
-            className={`admin-tab-btn ${activeTab === "roadmaps" ? "active" : ""}`}
+            role="tab"
+            aria-selected={activeTab === "roadmaps"}
+            className={`admin-stat-card clickable ${
+              activeTab === "roadmaps" ? "active-card" : ""
+            }`}
             onClick={() => setActiveTab("roadmaps")}
           >
-            Roadmaps ({roadmaps.length})
+            <div className="stat-icon green">
+              <Compass size={20} />
+            </div>
+            <div className="stat-details">
+              <span className="stat-number">{roadmaps.length}</span>
+              <span className="stat-label">Roadmaps</span>
+            </div>
           </button>
+
           <button
             type="button"
-            className={`admin-tab-btn ${activeTab === "users" ? "active" : ""}`}
+            role="tab"
+            aria-selected={activeTab === "users"}
+            className={`admin-stat-card clickable ${
+              activeTab === "users" ? "active-card" : ""
+            }`}
             onClick={() => setActiveTab("users")}
           >
-            Users ({usersList.length})
+            <div className="stat-icon orange">
+              <Users size={20} />
+            </div>
+            <div className="stat-details">
+              <span className="stat-number">{usersList.length}</span>
+              <span className="stat-label">Users</span>
+            </div>
           </button>
         </div>
 
@@ -907,201 +901,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* ================= TAB 1: OVERVIEW ================= */}
-        {!loading && activeTab === "overview" && (
-          <section className="admin-overview-section">
-            <div className="admin-stats-grid">
-              <div
-                className="admin-stat-card clickable"
-                onClick={() => setActiveTab("careers")}
-              >
-                <div className="stat-icon purple">
-                  <Briefcase size={22} />
-                </div>
-                <div className="stat-details">
-                  <span className="stat-number">{careers.length}</span>
-                  <span className="stat-label">Total Careers</span>
-                </div>
-              </div>
-
-              <div
-                className="admin-stat-card clickable"
-                onClick={() => setActiveTab("fields")}
-              >
-                <div className="stat-icon blue">
-                  <Layers size={22} />
-                </div>
-                <div className="stat-details">
-                  <span className="stat-number">{fields.length}</span>
-                  <span className="stat-label">Industry Fields</span>
-                </div>
-              </div>
-
-              <div
-                className="admin-stat-card clickable"
-                onClick={() => setActiveTab("fields")}
-              >
-                <div className="stat-icon cyan">
-                  <FolderGit2 size={22} />
-                </div>
-                <div className="stat-details">
-                  <span className="stat-number">{subfields.length}</span>
-                  <span className="stat-label">Specialised Subfields</span>
-                </div>
-              </div>
-
-              <div
-                className="admin-stat-card clickable"
-                onClick={() => setActiveTab("roadmaps")}
-              >
-                <div className="stat-icon green">
-                  <Compass size={22} />
-                </div>
-                <div className="stat-details">
-                  <span className="stat-number">{roadmaps.length}</span>
-                  <span className="stat-label">Milestone Roadmaps</span>
-                </div>
-              </div>
-
-              <div
-                className="admin-stat-card clickable"
-                onClick={() => setActiveTab("users")}
-              >
-                <div className="stat-icon orange">
-                  <Users size={22} />
-                </div>
-                <div className="stat-details">
-                  <span className="stat-number">{usersList.length}</span>
-                  <span className="stat-label">Registered Users</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="admin-quick-actions-card">
-              <h3>Quick Management Actions</h3>
-              <div className="quick-actions-row">
-                <button
-                  type="button"
-                  className="primary-btn"
-                  onClick={openAddCareerModal}
-                >
-                  <Plus size={16} />
-                  <span>Add Career Pathway</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={openAddFieldModal}
-                >
-                  <Plus size={16} />
-                  <span>Add Industry Field</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={() => openAddSubfieldModal()}
-                >
-                  <Plus size={16} />
-                  <span>Add Subfield</span>
-                </button>
-
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={openAddRoadmapModal}
-                >
-                  <Plus size={16} />
-                  <span>Create Career Roadmap</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Overview Breakdown Grid */}
-            <div className="admin-overview-panels-grid">
-              {/* Panel 1: Careers per Field */}
-              <div className="admin-panel-card">
-                <div className="admin-panel-header">
-                  <h3>Careers by Industry Field</h3>
-                  <button
-                    type="button"
-                    className="admin-link-btn"
-                    onClick={() => setActiveTab("fields")}
-                  >
-                    Manage Fields →
-                  </button>
-                </div>
-                <div className="admin-field-bars-list">
-                  {fields.map((f) => {
-                    const count = careers.filter(
-                      (c) => String(c.fieldId?._id || c.fieldId) === String(f._id)
-                    ).length;
-                    const pct =
-                      careers.length > 0
-                        ? Math.round((count / careers.length) * 100)
-                        : 0;
-                    return (
-                      <div key={f._id} className="admin-field-bar-item">
-                        <div className="admin-field-bar-top">
-                          <strong>{f.name}</strong>
-                          <span>
-                            {count} careers ({pct}%)
-                          </span>
-                        </div>
-                        <div className="admin-field-bar-track">
-                          <div
-                            className="admin-field-bar-fill"
-                            style={{ width: `${Math.max(pct, 4)}%` }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Panel 2: Recent Registered Users */}
-              <div className="admin-panel-card">
-                <div className="admin-panel-header">
-                  <h3>Recent Users</h3>
-                  <button
-                    type="button"
-                    className="admin-link-btn"
-                    onClick={() => setActiveTab("users")}
-                  >
-                    Manage All Users →
-                  </button>
-                </div>
-                <div className="admin-recent-users-list">
-                  {usersList.slice(0, 6).map((u) => (
-                    <div key={u._id} className="admin-recent-user-row">
-                      <div className="admin-user-avatar">
-                        {(u.name || "U").charAt(0).toUpperCase()}
-                      </div>
-                      <div className="admin-user-meta">
-                        <strong>{u.name}</strong>
-                        <span>{u.email}</span>
-                      </div>
-                      <span
-                        className={`role-badge ${
-                          u.role === "admin" ? "admin" : ""
-                        }`}
-                      >
-                        {u.role || "student"}
-                      </span>
-                    </div>
-                  ))}
-                  {usersList.length === 0 && (
-                    <p className="text-muted">No users found.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ================= TAB 2: MANAGE CAREERS ================= */}
+        {/* ================= SECTION 1: MANAGE CAREERS ================= */}
         {!loading && activeTab === "careers" && (
           <section className="admin-table-section">
             <div className="table-actions-header">
@@ -1155,22 +955,28 @@ export default function AdminDashboard() {
                 <tbody>
                   {filteredCareers.map((c) => (
                     <tr key={c._id || c.id}>
-                      <td>
+                      <td data-label="Career Name" className="admin-cell-primary">
                         <strong>{c.name}</strong>
                       </td>
-                      <td>{c.fieldId?.name || c.fieldName || "—"}</td>
-                      <td>{c.subfieldId?.name || "—"}</td>
-                      <td>
+                      <td data-label="Industry Field">
+                        <span>{c.fieldId?.name || c.fieldName || "—"}</span>
+                      </td>
+                      <td data-label="Subfield">
+                        <span>{c.subfieldId?.name || "—"}</span>
+                      </td>
+                      <td data-label="Demand">
                         <span className="demand-pill-small">
                           {typeof c.demand === "object"
                             ? c.demand?.level
                             : c.demand || "High"}
                         </span>
                       </td>
-                      <td>
-                        {c.education?.minimumQualification || "Bachelor's Degree"}
+                      <td data-label="Min. Education">
+                        <span>
+                          {c.education?.minimumQualification || "Bachelor's Degree"}
+                        </span>
                       </td>
-                      <td>
+                      <td data-label="Actions" className="admin-cell-actions">
                         <div className="table-action-buttons">
                           <Link
                             to={`/careers/${c._id || c.id}`}
@@ -1214,34 +1020,24 @@ export default function AdminDashboard() {
           </section>
         )}
 
-        {/* ================= TAB 3: MANAGE FIELDS & SUBFIELDS ================= */}
+        {/* ================= SECTION 2: MANAGE FIELDS & SUBFIELDS ================= */}
         {!loading && activeTab === "fields" && (
           <section className="admin-table-section">
             <div className="table-actions-header">
               <div>
-                <h3>Industry Fields & Specialised Subfields</h3>
+                <h3>Industry Fields &amp; Subfields</h3>
                 <p className="admin-section-subtext">
-                  Organize top-level career domains and their specialised subfields.
+                  Manage top-level industry fields and add specialised subfields inside each field.
                 </p>
               </div>
-              <div className="admin-btn-group">
-                <button
-                  type="button"
-                  className="secondary-btn"
-                  onClick={() => openAddSubfieldModal()}
-                >
-                  <Plus size={16} />
-                  <span>Add Subfield</span>
-                </button>
-                <button
-                  type="button"
-                  className="primary-btn"
-                  onClick={openAddFieldModal}
-                >
-                  <Plus size={16} />
-                  <span>Add Industry Field</span>
-                </button>
-              </div>
+              <button
+                type="button"
+                className="primary-btn"
+                onClick={openAddFieldModal}
+              >
+                <Plus size={16} />
+                <span>Add Industry Field</span>
+              </button>
             </div>
 
             <div className="admin-fields-list-cards">
@@ -1256,7 +1052,7 @@ export default function AdminDashboard() {
                 return (
                   <div key={f._id} className="admin-field-card">
                     <div className="field-card-title-row">
-                      <div>
+                      <div className="field-card-info">
                         <h4>{f.name}</h4>
                         <p className="field-card-desc">{f.description}</p>
                       </div>
@@ -1379,21 +1175,29 @@ export default function AdminDashboard() {
                       r.career;
                     return (
                       <tr key={r._id}>
-                        <td>
+                        <td
+                          data-label="Roadmap"
+                          className="roadmap-title-cell admin-cell-primary"
+                        >
                           <strong>{r.title || "Career Roadmap"}</strong>
                           {r.summary && (
                             <div className="table-subtext">{r.summary}</div>
                           )}
                         </td>
-                        <td>
-                          {r.career?.name || r.careerId?.name || "Linked Career"}
+                        <td
+                          data-label="Linked Career"
+                          className="roadmap-career-cell"
+                        >
+                          <span>
+                            {r.career?.name || r.careerId?.name || "Linked Career"}
+                          </span>
                         </td>
-                        <td>
+                        <td data-label="Milestones">
                           <span className="demand-pill-small">
                             {r.steps?.length || 0} Steps
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Actions" className="admin-cell-actions">
                           <div className="table-action-buttons">
                             {linkedCareerId && (
                               <Link
@@ -1482,14 +1286,16 @@ export default function AdminDashboard() {
                     const isActive = u.isActive !== false;
                     return (
                       <tr key={u._id}>
-                        <td>
+                        <td data-label="User" className="admin-cell-primary">
                           <strong>{u.name}</strong>
                           {u.location && (
                             <div className="table-subtext">{u.location}</div>
                           )}
                         </td>
-                        <td>{u.email}</td>
-                        <td>
+                        <td data-label="Email" className="admin-cell-break">
+                          <span>{u.email}</span>
+                        </td>
+                        <td data-label="Role">
                           <span
                             className={`role-badge ${
                               u.role === "admin" ? "admin" : ""
@@ -1498,7 +1304,7 @@ export default function AdminDashboard() {
                             {u.role || "student"}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Status">
                           <span
                             className={`status-badge ${
                               isActive ? "active" : "inactive"
@@ -1507,29 +1313,15 @@ export default function AdminDashboard() {
                             {isActive ? "Active" : "Deactivated"}
                           </span>
                         </td>
-                        <td>
+                        <td data-label="Interests Setup">
                           {u.assessmentCompleted ? (
                             <span className="status-badge active">Completed</span>
                           ) : (
                             <span className="status-badge pending">Pending</span>
                           )}
                         </td>
-                        <td>
+                        <td data-label="Actions" className="admin-cell-actions">
                           <div className="table-action-buttons">
-                            <button
-                              type="button"
-                              className="table-edit-btn"
-                              onClick={() => handleToggleUserRole(u)}
-                              title="Switch Role"
-                            >
-                              <Shield size={14} />
-                              <span>
-                                {u.role === "admin"
-                                  ? "Make Student"
-                                  : "Make Admin"}
-                              </span>
-                            </button>
-
                             <button
                               type="button"
                               className="table-edit-btn"

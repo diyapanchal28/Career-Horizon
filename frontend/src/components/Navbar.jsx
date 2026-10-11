@@ -106,16 +106,18 @@ export default function Navbar() {
   useEffect(() => {
     setLoginDropdownOpen(false);
     setNotifOpen(false);
+    setMobileMenuOpen(false);
   }, [location.pathname]);
 
   const handleMarkAllRead = async () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     try {
       const authToken = token || localStorage.getItem("token");
+      if (!authToken) return;
       await fetch(`${API_URL}/notifications/read-all`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${authToken}` },
       });
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch (err) {
       console.error("Failed to mark notifications read:", err);
     }
@@ -133,7 +135,7 @@ export default function Navbar() {
       <div className="nav-container">
         {/* Brand Logo */}
         <Link
-          to={isAuthenticated ? "/dashboard" : "/"}
+          to={isAuthenticated ? (isAdmin ? "/admin" : "/dashboard") : "/"}
           className="brand"
           onClick={() => setMobileMenuOpen(false)}
         >
@@ -146,39 +148,84 @@ export default function Navbar() {
         {/* Desktop Navigation Links */}
         <nav className="nav-links">
           {isAuthenticated ? (
-            /* Authenticated Links (Matches PDF Pages 3–8) */
-            <>
-              <Link
-                to="/dashboard"
-                className={location.pathname === "/dashboard" ? "nav-link active" : "nav-link"}
-              >
-                <span>Dashboard</span>
-              </Link>
-              <Link
-                to="/careers"
-                className={
-                  location.pathname.startsWith("/careers") ? "nav-link active" : "nav-link"
-                }
-              >
-                <span>Explore careers</span>
-              </Link>
-              <Link
-                to="/matches"
-                className={location.pathname === "/matches" ? "nav-link active" : "nav-link"}
-              >
-                <span>My matches</span>
-              </Link>
-              <Link
-                to="/saved-careers"
-                className={
-                  location.pathname === "/saved-careers"
-                    ? "nav-link active nav-link-saved"
-                    : "nav-link nav-link-saved"
-                }
-              >
-                <span>Saved</span>
-              </Link>
-            </>
+            isAdmin ? (
+              <>
+                <Link
+                  to="/admin"
+                  className={
+                    location.pathname.startsWith("/admin")
+                      ? "nav-link active"
+                      : "nav-link"
+                  }
+                >
+                  <span>Admin Panel</span>
+                </Link>
+                <Link
+                  to="/careers"
+                  className={
+                    location.pathname.startsWith("/careers")
+                      ? "nav-link active"
+                      : "nav-link"
+                  }
+                >
+                  <span>Explore careers</span>
+                </Link>
+              </>
+            ) : (
+              /* Authenticated Student Links */
+              <>
+                <Link
+                  to="/dashboard"
+                  className={
+                    location.pathname === "/dashboard"
+                      ? "nav-link active"
+                      : "nav-link"
+                  }
+                >
+                  <span>Dashboard</span>
+                </Link>
+                <Link
+                  to="/careers"
+                  className={
+                    location.pathname.startsWith("/careers")
+                      ? "nav-link active"
+                      : "nav-link"
+                  }
+                >
+                  <span>Explore careers</span>
+                </Link>
+                <Link
+                  to="/matches"
+                  className={
+                    location.pathname === "/matches"
+                      ? "nav-link active"
+                      : "nav-link"
+                  }
+                >
+                  <span>My matches</span>
+                </Link>
+                <Link
+                  to="/saved-careers"
+                  className={
+                    location.pathname === "/saved-careers"
+                      ? "nav-link active nav-link-saved"
+                      : "nav-link nav-link-saved"
+                  }
+                >
+                  <span>Saved</span>
+                </Link>
+                <Link
+                  to="/profile"
+                  className={
+                    location.pathname === "/profile"
+                      ? "nav-link active nav-link-mobile-only"
+                      : "nav-link nav-link-mobile-only"
+                  }
+                >
+                  <span>Profile</span>
+                </Link>
+              </>
+            )
           ) : (
             /* Public Guest Links (Matches PDF Pages 1, 2, 3, 9) */
             <>
@@ -222,7 +269,14 @@ export default function Navbar() {
                 <button
                   type="button"
                   className="nav-bell-btn"
-                  onClick={() => setNotifOpen((prev) => !prev)}
+                  onClick={() => {
+                    const nextOpen = !notifOpen;
+                    setNotifOpen(nextOpen);
+                    setMobileMenuOpen(false);
+                    if (nextOpen && unreadCount > 0) {
+                      handleMarkAllRead();
+                    }
+                  }}
                   title="Notifications"
                   aria-label="Notifications"
                 >
@@ -294,7 +348,7 @@ export default function Navbar() {
                     {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
                   </span>
                 )}
-                <span>{user?.name || "Student"}</span>
+                <span className="nav-user-name-text">{user?.name || "Student"}</span>
               </Link>
 
               <button
@@ -384,7 +438,10 @@ export default function Navbar() {
         <button
           type="button"
           className="mobile-menu-toggle"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          onClick={() => {
+            setMobileMenuOpen((prev) => !prev);
+            setNotifOpen(false);
+          }}
           aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
         >
           {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -411,56 +468,108 @@ export default function Navbar() {
                       <UserIcon size={18} />
                     )}
                   </div>
-                  <div>
+                  <div className="mobile-user-meta-wrap">
                     <strong className="mobile-user-name">{user?.name || "Student"}</strong>
                     <span className="mobile-user-email">{user?.email}</span>
                   </div>
                 </div>
 
-                <Link
-                  to="/dashboard"
-                  className="mobile-nav-link"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <LayoutDashboard size={18} />
-                  <span>Dashboard</span>
-                </Link>
+                {isAdmin ? (
+                  <>
+                    <Link
+                      to="/admin"
+                      className={
+                        location.pathname.startsWith("/admin")
+                          ? "mobile-nav-link active"
+                          : "mobile-nav-link"
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Shield size={18} />
+                      <span>Admin Panel</span>
+                    </Link>
 
-                <Link
-                  to="/careers"
-                  className="mobile-nav-link"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Compass size={18} />
-                  <span>Explore careers</span>
-                </Link>
+                    <Link
+                      to="/careers"
+                      className={
+                        location.pathname.startsWith("/careers")
+                          ? "mobile-nav-link active"
+                          : "mobile-nav-link"
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Compass size={18} />
+                      <span>Explore careers</span>
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/dashboard"
+                      className={
+                        location.pathname === "/dashboard"
+                          ? "mobile-nav-link active"
+                          : "mobile-nav-link"
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <LayoutDashboard size={18} />
+                      <span>Dashboard</span>
+                    </Link>
 
-                <Link
-                  to="/matches"
-                  className="mobile-nav-link"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Sparkles size={18} />
-                  <span>My matches</span>
-                </Link>
+                    <Link
+                      to="/careers"
+                      className={
+                        location.pathname.startsWith("/careers")
+                          ? "mobile-nav-link active"
+                          : "mobile-nav-link"
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Compass size={18} />
+                      <span>Explore careers</span>
+                    </Link>
 
-                <Link
-                  to="/saved-careers"
-                  className="mobile-nav-link"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Bookmark size={18} />
-                  <span>Saved</span>
-                </Link>
+                    <Link
+                      to="/matches"
+                      className={
+                        location.pathname === "/matches"
+                          ? "mobile-nav-link active"
+                          : "mobile-nav-link"
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Sparkles size={18} />
+                      <span>My matches</span>
+                    </Link>
 
-                <Link
-                  to="/profile"
-                  className="mobile-nav-link"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <UserIcon size={18} />
-                  <span>Your profile</span>
-                </Link>
+                    <Link
+                      to="/saved-careers"
+                      className={
+                        location.pathname === "/saved-careers"
+                          ? "mobile-nav-link active"
+                          : "mobile-nav-link"
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Bookmark size={18} />
+                      <span>Saved</span>
+                    </Link>
+
+                    <Link
+                      to="/profile"
+                      className={
+                        location.pathname === "/profile"
+                          ? "mobile-nav-link active"
+                          : "mobile-nav-link"
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <UserIcon size={18} />
+                      <span>Your profile</span>
+                    </Link>
+                  </>
+                )}
 
                 <button
                   type="button"
@@ -475,7 +584,7 @@ export default function Navbar() {
               <>
                 <Link
                   to="/"
-                  className="mobile-nav-link"
+                  className={location.pathname === "/" ? "mobile-nav-link active" : "mobile-nav-link"}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Compass size={18} />
@@ -483,7 +592,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   to="/careers"
-                  className="mobile-nav-link"
+                  className={location.pathname === "/careers" ? "mobile-nav-link active" : "mobile-nav-link"}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Sparkles size={18} />
@@ -491,7 +600,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   to="/fields"
-                  className="mobile-nav-link"
+                  className={location.pathname === "/fields" ? "mobile-nav-link active" : "mobile-nav-link"}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Layers size={18} />
@@ -499,7 +608,7 @@ export default function Navbar() {
                 </Link>
                 <Link
                   to="/about"
-                  className="mobile-nav-link"
+                  className={location.pathname === "/about" ? "mobile-nav-link active" : "mobile-nav-link"}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <HelpCircle size={18} />

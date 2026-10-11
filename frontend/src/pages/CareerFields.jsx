@@ -3,6 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
 import { ArrowLeft } from "lucide-react";
+import {
+  getFieldMeta,
+  getSubfieldMeta,
+} from "../utils/fieldDescriptions";
 
 const API_URL = "http://localhost:5000/api";
 
@@ -99,13 +103,25 @@ export default function CareerFields() {
             {fields.map((field) => {
               const fieldSubs = getSubfieldsForField(field._id);
               const careerCount = getCareerCountForField(field._id);
+              const fMeta = getFieldMeta(field);
+              const FieldIcon = fMeta.Icon;
 
               return (
                 <div key={field._id} className="pdf-field-block">
                   <div className="pdf-field-block-header">
-                    <div>
-                      <h3>{field.name}</h3>
-                      {field.description && <p>{field.description}</p>}
+                    <div className="creative-card-row">
+                      <span
+                        className={`creative-theme-icon ${fMeta.tone}`}
+                        aria-hidden="true"
+                      >
+                        <FieldIcon size={20} strokeWidth={2.1} />
+                      </span>
+                      <div className="creative-field-info">
+                        <h3>{field.name}</h3>
+                        <span className="creative-short-tag">
+                          {fMeta.shortTag}
+                        </span>
+                      </div>
                     </div>
                     <Link
                       to={`/careers?fieldId=${field._id}`}
@@ -117,19 +133,21 @@ export default function CareerFields() {
 
                   {fieldSubs.length > 0 && (
                     <div className="pdf-subfields-grid">
-                      {fieldSubs.map((sub) => (
-                        <Link
-                          key={sub._id}
-                          to={`/careers?fieldId=${field._id}&subfieldId=${sub._id}`}
-                          className="pdf-subfield-item"
-                        >
-                          <strong>{sub.name}</strong>
-                          <span>
-                            {sub.description ||
-                              `Explore roles in ${sub.name}`}
-                          </span>
-                        </Link>
-                      ))}
+                      {fieldSubs.map((sub) => {
+                        const sMeta = getSubfieldMeta(sub, field.name);
+                        return (
+                          <Link
+                            key={sub._id}
+                            to={`/careers?fieldId=${field._id}&subfieldId=${sub._id}`}
+                            className="pdf-subfield-item"
+                          >
+                            <strong>{sub.name}</strong>
+                            <span className="creative-short-tag">
+                              {sMeta.shortTag}
+                            </span>
+                          </Link>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

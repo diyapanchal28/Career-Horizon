@@ -8,6 +8,11 @@ const subfieldSchema = new mongoose.Schema(
             trim: true
         },
 
+        slug: {
+            type: String,
+            trim: true
+        },
+
         description: {
             type: String,
             default: ""
@@ -16,7 +21,18 @@ const subfieldSchema = new mongoose.Schema(
         field: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Field",
-            required: true
+            required: false
+        },
+
+        fieldId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Field",
+            required: false
+        },
+
+        isActive: {
+            type: Boolean,
+            default: true
         }
     },
     {

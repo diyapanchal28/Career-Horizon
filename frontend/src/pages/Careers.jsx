@@ -477,19 +477,27 @@ export default function Careers() {
 
         {/* Layout: Left Sidebar Filters + Right Grid */}
         <div className="pdf-catalog-layout">
+          {/* Mobile Filter Backdrop */}
+          {showMobileFilters && (
+            <div
+              className="pdf-sidebar-backdrop"
+              onClick={() => setShowMobileFilters(false)}
+            />
+          )}
+
           {/* Left Filter Sidebar */}
           <aside className={`pdf-catalog-sidebar ${showMobileFilters ? "open" : ""}`}>
-            {showMobileFilters && (
-              <div className="sidebar-mobile-top">
-                <strong>Filters</strong>
-                <button
-                  type="button"
-                  onClick={() => setShowMobileFilters(false)}
-                >
-                  <X size={20} />
-                </button>
-              </div>
-            )}
+            <div className="sidebar-mobile-top">
+              <strong>Filter careers</strong>
+              <button
+                type="button"
+                className="sidebar-mobile-close"
+                onClick={() => setShowMobileFilters(false)}
+                aria-label="Close filters"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
             {/* Field */}
             <div className="pdf-filter-group">
@@ -572,6 +580,26 @@ export default function Careers() {
                 Reset filters
               </button>
             )}
+
+            <div className="sidebar-mobile-footer">
+              {activeFiltersCount > 0 && (
+                <button
+                  type="button"
+                  className="pdf-outline-btn"
+                  onClick={handleResetFilters}
+                >
+                  Reset
+                </button>
+              )}
+              <button
+                type="button"
+                className="pdf-explore-btn"
+                onClick={() => setShowMobileFilters(false)}
+              >
+                Show {filteredCareers.length}{" "}
+                {filteredCareers.length === 1 ? "result" : "results"}
+              </button>
+            </div>
           </aside>
 
           {/* Right Career Cards Content Area */}
