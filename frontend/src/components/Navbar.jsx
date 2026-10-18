@@ -138,11 +138,13 @@ export default function Navbar() {
           to={isAuthenticated ? (isAdmin ? "/admin" : "/dashboard") : "/"}
           className="brand"
           onClick={() => setMobileMenuOpen(false)}
+          aria-label="Career Horizon — Return to home"
         >
-          <div className="brand-icon">
-            <span className="brand-letter">C</span>
-          </div>
-          <span className="brand-title-text">Career Horizon</span>
+          <img
+            src="/logo.png"
+            alt="Career Horizon"
+            className="brand-logo-img"
+          />
         </Link>
 
         {/* Desktop Navigation Links */}

@@ -13,11 +13,12 @@ export default function AuthVisualDoodles({ mode = "login" }) {
   return (
     <section className="auth-visual">
       {/* Brand */}
-      <Link to="/" className="auth-brand" title="Return to Home">
-        <div className="auth-brand-icon">
-          <Sparkles size={20} />
-        </div>
-        <span>Career Horizon</span>
+      <Link to="/" className="auth-brand" title="Return to Home" aria-label="Career Horizon — Return to Home">
+        <img
+          src="/logo-white.png"
+          alt="Career Horizon"
+          className="auth-brand-logo-img"
+        />
       </Link>
 
       {/* Main Narrative */}

@@ -1970,11 +1970,12 @@ export default function AdminDashboard() {
       <footer className="footer">
         <div className="footer-container">
           <div className="footer-brand">
-            <Link to="/" className="brand">
-              <div className="brand-icon">
-                <Sparkles size={18} />
-              </div>
-              <span>Career Horizon</span>
+            <Link to="/" className="brand" aria-label="Career Horizon">
+              <img
+                src="/logo.png"
+                alt="Career Horizon"
+                className="brand-logo-img"
+              />
             </Link>
             <p>Platform Administration Panel</p>
           </div>

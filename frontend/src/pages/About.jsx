@@ -169,11 +169,12 @@ export default function About() {
       <footer className="footer">
         <div className="footer-container pdf-footer-grid">
           <div className="footer-brand">
-            <Link to="/" className="brand">
-              <div className="brand-icon">
-                <span className="brand-letter">C</span>
-              </div>
-              <span className="brand-title-text">Career Horizon</span>
+            <Link to="/" className="brand" aria-label="Career Horizon">
+              <img
+                src="/logo.png"
+                alt="Career Horizon"
+                className="brand-logo-img"
+              />
             </Link>
             <p>
               Explore careers, find the ones that fit your interests, and follow

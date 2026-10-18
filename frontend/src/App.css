@@ -143,6 +143,33 @@ button {
   letter-spacing: -0.02em;
   color: var(--text-main);
   flex-shrink: 0;
+  text-decoration: none;
+}
+
+.brand-logo-img {
+  height: 38px;
+  width: auto;
+  max-width: 215px;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.25s ease, filter 0.25s ease;
+}
+
+.brand:hover .brand-logo-img {
+  transform: scale(1.03);
+}
+
+.auth-brand-logo-img {
+  height: 40px;
+  width: auto;
+  max-width: 230px;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.25s ease;
+}
+
+.auth-brand:hover .auth-brand-logo-img {
+  transform: scale(1.03);
 }
 
 .brand-icon {
@@ -10845,6 +10872,10 @@ button {
     order: 1;
   }
 
+  .navbar .brand .brand-logo-img {
+    height: 32px;
+  }
+
   .navbar .nav-actions {
     order: 2;
     margin-left: auto;
@@ -11739,6 +11770,10 @@ button {
 
   .brand-sub {
     display: none;
+  }
+
+  .navbar .brand .brand-logo-img {
+    height: 28px;
   }
 
   .pdf-step-Status-pill {
