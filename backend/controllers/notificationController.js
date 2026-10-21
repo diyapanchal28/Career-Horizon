@@ -1,19 +1,24 @@
 const Notification = require("../models/Notification");
+const User = require("../models/User");
+const { sendNotificationEmail } = require("../utils/emailService");
 
-// Create a notification for the logged-in user
+// Create a notification for a user (logged-in user or specified userId)
 const createNotification = async (req, res) => {
     try {
         const {
             title,
             message,
-            type
+            type,
+            userId
         } = req.body;
 
+        const targetUserId = userId || req.user.userId;
+
         const notification = await Notification.create({
-            user: req.user.userId,
+            user: targetUserId,
             title,
             message,
-            type
+            type: type || "general"
         });
 
         res.status(201).json(notification);
@@ -121,10 +126,56 @@ const markAllNotificationsAsRead = async (req, res) => {
     }
 };
 
+// Test email notification endpoint for the authenticated user
+const testEmailNotification = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.userId);
+        if (!user || !user.email) {
+            return res.status(404).json({ message: "User or user email not found" });
+        }
+
+        const result = await sendNotificationEmail({
+            to: user.email,
+            name: user.name,
+            title: "Test Notification from Career Horizon",
+            message: "Your email notifications are working! You will receive future milestone and career guidance updates directly to this email address.",
+            type: "general"
+        });
+
+        if (result.notConfigured) {
+            return res.status(200).json({
+                message: "Email service is configured in code, but EMAIL_USER/EMAIL_PASS have not been filled in backend/.env yet.",
+                configured: false,
+                recipient: user.email
+            });
+        }
+
+        if (!result.success) {
+            return res.status(500).json({
+                message: "Failed to send email. Check SMTP credentials or network settings.",
+                configured: true,
+                error: result.error
+            });
+        }
+
+        res.json({
+            message: `Test email notification successfully sent to ${user.email}`,
+            configured: true,
+            messageId: result.messageId
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Test email failed",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createNotification,
     getUserNotifications,
     markNotificationAsRead,
     markAllNotificationsAsRead,
-    deleteNotification
+    deleteNotification,
+    testEmailNotification
 };
