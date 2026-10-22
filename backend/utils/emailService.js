@@ -197,6 +197,112 @@ const sendNotificationEmail = async ({ to, name, title, message, type = "general
 };
 
 /**
+ * Send a password reset OTP code email.
+ *
+ * @param {Object} options
+ * @param {string} options.to - Recipient email address
+ * @param {string} [options.name] - Recipient name
+ * @param {string} options.otp - 6-digit verification code
+ * @param {number} [options.expiresMinutes] - Expiration duration in minutes (default 15)
+ * @returns {Promise<{success: boolean, messageId?: string, error?: string, notConfigured?: boolean}>}
+ */
+const sendPasswordResetEmail = async ({ to, name, otp, expiresMinutes = 15 }) => {
+    try {
+        if (!to) {
+            return { success: false, error: "Recipient email is required" };
+        }
+
+        const transporter = createTransporter();
+        const recipientName = name ? name.trim() : "Student";
+
+        // If credentials are not configured, log prominently so development/testing works
+        if (!transporter) {
+            console.log(
+                `\n=========================================\n[Email Service] (SMTP not configured)\nPassword Reset OTP for <${to}>: [ ${otp} ] (Valid for ${expiresMinutes} mins)\n=========================================\n`
+            );
+            return {
+                success: true,
+                notConfigured: true,
+                message: "SMTP not configured in .env; OTP logged to server console for testing"
+            };
+        }
+
+        const fromAddress =
+            process.env.EMAIL_FROM ||
+            `"Career Horizon" <${process.env.EMAIL_USER}>`;
+
+        const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+  <style>
+    body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f1f5f9; color: #1e293b; }
+    .wrapper { width: 100%; max-width: 580px; margin: 30px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+    .header { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 32px 24px; text-align: center; }
+    .header h1 { margin: 0; color: #ffffff; font-size: 24px; font-weight: 700; }
+    .header p { margin: 6px 0 0; color: #e0e7ff; font-size: 14px; }
+    .content { padding: 32px 28px; }
+    .title { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 12px; }
+    .greeting { font-size: 15px; color: #475569; margin: 0 0 16px; }
+    .otp-card { background: #f8fafc; border: 2px dashed #6366f1; border-radius: 10px; padding: 22px; text-align: center; margin: 24px 0; }
+    .otp-code { font-family: 'Courier New', Courier, monospace; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #4f46e5; margin: 0; }
+    .otp-caption { font-size: 13px; color: #64748b; margin-top: 8px; }
+    .warning { font-size: 13px; color: #64748b; line-height: 1.5; margin-top: 20px; }
+    .footer { background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 20px 24px; text-align: center; font-size: 12px; color: #64748b; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Career Horizon</h1>
+      <p>Password Reset Request</p>
+    </div>
+    <div class="content">
+      <h2 class="title">Reset Your Password</h2>
+      <p class="greeting">Hi ${recipientName},</p>
+      <p>We received a request to reset the password for your Career Horizon account. Use the verification code below to set a new password:</p>
+      
+      <div class="otp-card">
+        <div class="otp-code">${otp}</div>
+        <div class="otp-caption">This code will expire in ${expiresMinutes} minutes.</div>
+      </div>
+
+      <p class="warning">
+        If you did not request this password reset, please ignore this email or contact support if you suspect unauthorized activity on your account.
+      </p>
+    </div>
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} Career Horizon. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+        `;
+
+        const text = `Career Horizon Password Reset\n\nHi ${recipientName},\n\nYour 6-digit password reset code is: ${otp}\n\nThis code is valid for ${expiresMinutes} minutes.\n\nIf you did not request this reset, you can safely ignore this email.\n\n---\nCareer Horizon`;
+
+        const mailOptions = {
+            from: fromAddress,
+            to,
+            subject: `[Career Horizon] ${otp} is your password reset code`,
+            text,
+            html
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log(`[Email Service] Password reset email sent to ${to}: ${info.messageId}`);
+        return { success: true, messageId: info.messageId };
+
+    } catch (error) {
+        console.error(`[Email Service] Error sending password reset email to ${to}:`, error.message);
+        return { success: false, error: error.message };
+    }
+};
+
+/**
  * Verify transporter connection (useful for diagnostic test route).
  */
 const verifyEmailConnection = async () => {
@@ -217,5 +323,6 @@ const verifyEmailConnection = async () => {
 
 module.exports = {
     sendNotificationEmail,
+    sendPasswordResetEmail,
     verifyEmailConnection
 };

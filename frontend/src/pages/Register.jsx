@@ -2,9 +2,13 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
-import { AlertCircle, Loader2, Lock, ArrowLeft } from "lucide-react";
+import { AlertCircle, Loader2, Lock, ArrowLeft, User, Mail } from "lucide-react";
 
 const API_URL = "http://localhost:5000/api";
+
+const isValidEmail = (email) => {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());
+};
 
 export default function Register() {
   const navigate = useNavigate();
@@ -17,6 +21,8 @@ export default function Register() {
     confirmPassword: "",
   });
 
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -24,35 +30,93 @@ export default function Register() {
     sessionStorage.removeItem("authGateMessage");
   }, []);
 
+  const validateField = (name, value, allValues = form) => {
+    let msg = "";
+    if (name === "name") {
+      if (!value.trim()) {
+        msg = "Full name is required.";
+      } else if (value.trim().length < 2) {
+        msg = "Full name must be at least 2 characters.";
+      }
+    } else if (name === "email") {
+      if (!value.trim()) {
+        msg = "Email address is required.";
+      } else if (!isValidEmail(value)) {
+        msg = "Please enter a valid email address (e.g., student@example.com).";
+      }
+    } else if (name === "password") {
+      if (!value) {
+        msg = "Password is required.";
+      } else if (value.length < 6) {
+        msg = "Password must be at least 6 characters long.";
+      }
+    } else if (name === "confirmPassword") {
+      if (!value) {
+        msg = "Please confirm your password.";
+      } else if (value !== allValues.password) {
+        msg = "Passwords do not match. Please re-enter.";
+      }
+    }
+    return msg;
+  };
+
   const handleChange = (e) => {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    const updated = { ...form, [name]: value };
+    setForm(updated);
     if (error) setError("");
+
+    if (touched[name]) {
+      const fieldError = validateField(name, value, updated);
+      setErrors((prev) => ({ ...prev, [name]: fieldError }));
+    }
+
+    // If typing password and confirmPassword was already touched, re-validate confirmPassword
+    if (name === "password" && touched.confirmPassword) {
+      const confirmErr = validateField(
+        "confirmPassword",
+        form.confirmPassword,
+        updated
+      );
+      setErrors((prev) => ({ ...prev, confirmPassword: confirmErr }));
+    }
+  };
+
+  const handleBlur = (e) => {
+    const { name, value } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    const fieldError = validateField(name, value, form);
+    setErrors((prev) => ({ ...prev, [name]: fieldError }));
+  };
+
+  const validateAll = () => {
+    const newErrors = {
+      name: validateField("name", form.name),
+      email: validateField("email", form.email),
+      password: validateField("password", form.password),
+      confirmPassword: validateField(
+        "confirmPassword",
+        form.confirmPassword,
+        form
+      ),
+    };
+
+    setErrors(newErrors);
+    setTouched({
+      name: true,
+      email: true,
+      password: true,
+      confirmPassword: true,
+    });
+
+    return !Object.values(newErrors).some((msg) => Boolean(msg));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
-    if (
-      !form.name.trim() ||
-      !form.email.trim() ||
-      !form.password.trim() ||
-      !form.confirmPassword.trim()
-    ) {
-      setError("Please fill in all required fields.");
-      return;
-    }
-
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters long.");
-      return;
-    }
-
-    if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match. Please re-enter.");
+    if (!validateAll()) {
       return;
     }
 
@@ -149,8 +213,6 @@ export default function Register() {
             </p>
           </div>
 
-
-
           {error && (
             <div className="auth-error-banner" role="alert">
               <AlertCircle size={18} className="error-icon" />
@@ -170,68 +232,132 @@ export default function Register() {
           )}
 
           <div className="pdf-auth-card">
-            <form className="pdf-auth-form" onSubmit={handleSubmit} autoComplete="off">
+            <form
+              className="pdf-auth-form"
+              onSubmit={handleSubmit}
+              noValidate
+              autoComplete="off"
+            >
               <div className="pdf-form-field">
-                <label htmlFor="name">Full name</label>
+                <label htmlFor="name">
+                  Full name <span className="required-star">*</span>
+                </label>
                 <input
                   id="name"
                   type="text"
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  placeholder="Enter name"
-                  autoComplete="off"
+                  onBlur={handleBlur}
+                  placeholder="Enter your full name"
+                  className={
+                    touched.name && errors.name ? "pdf-input-invalid" : ""
+                  }
+                  autoComplete="name"
                   required
                 />
+                {touched.name && errors.name && (
+                  <span className="pdf-field-error">
+                    <AlertCircle size={13} /> {errors.name}
+                  </span>
+                )}
               </div>
 
               <div className="pdf-form-field">
-                <label htmlFor="email">Email</label>
+                <label htmlFor="email">
+                  Email <span className="required-star">*</span>
+                </label>
                 <input
                   id="email"
                   type="email"
                   name="email"
                   value={form.email}
                   onChange={handleChange}
-                  placeholder="Enter email"
-                  autoComplete="off"
+                  onBlur={handleBlur}
+                  placeholder="Enter your email"
+                  className={
+                    touched.email && errors.email ? "pdf-input-invalid" : ""
+                  }
+                  autoComplete="email"
                   required
                 />
+                {touched.email && errors.email && (
+                  <span className="pdf-field-error">
+                    <AlertCircle size={13} /> {errors.email}
+                  </span>
+                )}
               </div>
 
               <div className="pdf-form-field">
-                <label htmlFor="password">Password</label>
-                <div className="pdf-input-with-icon">
-                  <Lock size={16} className="pdf-input-icon" aria-hidden="true" />
+                <label htmlFor="password">
+                  Password <span className="required-star">*</span>
+                </label>
+                <div
+                  className={`pdf-input-with-icon ${
+                    touched.password && errors.password
+                      ? "pdf-input-invalid"
+                      : ""
+                  }`}
+                >
+                  <Lock
+                    size={16}
+                    className="pdf-input-icon"
+                    aria-hidden="true"
+                  />
                   <input
                     id="password"
                     type="password"
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    placeholder="Enter password"
+                    onBlur={handleBlur}
+                    placeholder="Enter password (min 6 characters)"
                     autoComplete="new-password"
                     required
                   />
                 </div>
-                <span className="pdf-field-hint">At least 6 characters</span>
+                {touched.password && errors.password ? (
+                  <span className="pdf-field-error">
+                    <AlertCircle size={13} /> {errors.password}
+                  </span>
+                ) : (
+                  <span className="pdf-field-hint">At least 6 characters</span>
+                )}
               </div>
 
               <div className="pdf-form-field">
-                <label htmlFor="confirmPassword">Confirm password</label>
-                <div className="pdf-input-with-icon">
-                  <Lock size={16} className="pdf-input-icon" aria-hidden="true" />
+                <label htmlFor="confirmPassword">
+                  Confirm password <span className="required-star">*</span>
+                </label>
+                <div
+                  className={`pdf-input-with-icon ${
+                    touched.confirmPassword && errors.confirmPassword
+                      ? "pdf-input-invalid"
+                      : ""
+                  }`}
+                >
+                  <Lock
+                    size={16}
+                    className="pdf-input-icon"
+                    aria-hidden="true"
+                  />
                   <input
                     id="confirmPassword"
                     type="password"
                     name="confirmPassword"
                     value={form.confirmPassword}
                     onChange={handleChange}
-                    placeholder="Confirm password"
+                    onBlur={handleBlur}
+                    placeholder="Re-enter password"
                     autoComplete="new-password"
                     required
                   />
                 </div>
+                {touched.confirmPassword && errors.confirmPassword && (
+                  <span className="pdf-field-error">
+                    <AlertCircle size={13} /> {errors.confirmPassword}
+                  </span>
+                )}
               </div>
 
               <button

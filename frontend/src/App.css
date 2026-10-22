@@ -8082,6 +8082,94 @@ button {
   color: var(--text-subtle);
 }
 
+/* Required Field Asterisk */
+.required-star {
+  color: #ef4444;
+  font-weight: 700;
+  margin-left: 3px;
+}
+
+/* Field validation styles */
+.pdf-form-field input.pdf-input-invalid,
+.pdf-form-field select.pdf-input-invalid,
+.pdf-input-with-icon.pdf-input-invalid input {
+  border-color: #ef4444 !important;
+  background-color: #fff9f9 !important;
+}
+
+.pdf-field-error {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  color: #ef4444;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.pdf-form-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pdf-forgot-password-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+  margin-bottom: 2px;
+}
+
+.pdf-forgot-password-link {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.15s ease;
+}
+
+.pdf-forgot-password-link:hover {
+  color: var(--primary-hover);
+}
+
+.pdf-auth-alert-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  font-size: 0.88rem;
+  margin-bottom: 14px;
+}
+
+.pdf-auth-alert-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+
+.pdf-auth-sub-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  font-size: 0.86rem;
+}
+
 .pdf-auth-submit-btn {
   margin-top: 6px;
   width: 100%;

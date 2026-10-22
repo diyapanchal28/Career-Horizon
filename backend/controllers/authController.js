@@ -2,6 +2,7 @@ const User = require("../models/User");
 const Notification = require("../models/Notification");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { sendPasswordResetEmail } = require("../utils/emailService");
 
 const formatUserResponse = (user) => ({
     id: user._id,
@@ -134,7 +135,126 @@ const loginUser = async (req, res) => {
     }
 };
 
+// Forgot Password - Send 6-digit OTP to user's registered email
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email || !email.trim()) {
+            return res.status(400).json({
+                message: "Please enter your registered email address"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "No account found with this email address"
+            });
+        }
+
+        // Generate 6-digit numeric OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+        user.resetPasswordOtp = otp;
+        user.resetPasswordExpires = expires;
+        await user.save();
+
+        // Send OTP email
+        const emailResult = await sendPasswordResetEmail({
+            to: user.email,
+            name: user.name,
+            otp,
+            expiresMinutes: 15
+        });
+
+        res.json({
+            message: "A 6-digit password reset code has been sent to your email.",
+            email: user.email,
+            devOtp: emailResult?.notConfigured ? otp : undefined
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to process forgot password request",
+            error: error.message
+        });
+    }
+};
+
+// Reset Password - Verify OTP and update password
+const resetPassword = async (req, res) => {
+    try {
+        const { email, otp, newPassword } = req.body;
+
+        if (!email || !otp || !newPassword) {
+            return res.status(400).json({
+                message: "Email, reset code, and new password are required"
+            });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({
+                message: "Password must be at least 6 characters long"
+            });
+        }
+
+        const normalizedEmail = email.trim().toLowerCase();
+        const user = await User.findOne({ email: normalizedEmail });
+
+        if (!user) {
+            return res.status(404).json({
+                message: "Account not found"
+            });
+        }
+
+        // Check if OTP matches
+        if (!user.resetPasswordOtp || user.resetPasswordOtp !== otp.trim()) {
+            return res.status(400).json({
+                message: "Invalid reset code. Please check and try again."
+            });
+        }
+
+        // Check if OTP expired
+        if (!user.resetPasswordExpires || user.resetPasswordExpires < new Date()) {
+            return res.status(400).json({
+                message: "Reset code has expired. Please request a new one."
+            });
+        }
+
+        // Hash new password and clear reset fields
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        user.resetPasswordOtp = null;
+        user.resetPasswordExpires = null;
+        await user.save();
+
+        // Send notification
+        await Notification.create({
+            user: user._id,
+            title: "Password Updated",
+            message: "Your Career Horizon account password was successfully reset.",
+            type: "update"
+        }).catch(() => {});
+
+        res.json({
+            message: "Password reset successfully. You can now sign in with your new password."
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Failed to reset password",
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    forgotPassword,
+    resetPassword
 };
