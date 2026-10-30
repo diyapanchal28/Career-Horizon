@@ -24,7 +24,7 @@ import {
   Target,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+import { API_URL } from "../config/api";
 
 // Fallback curated courses per domain and level with real external links
 const FALLBACK_COURSES_BY_DOMAIN = {

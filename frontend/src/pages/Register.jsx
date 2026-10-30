@@ -4,7 +4,7 @@ import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
 import { AlertCircle, Loader2, Lock, ArrowLeft, User, Mail } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+import { API_URL } from "../config/api";
 
 const isValidEmail = (email) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim());

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { AuthContext } from "./auth-context";
 
-const API_URL = "http://localhost:5000/api";
+import { API_URL } from "../config/api";
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem("token") || null);

@@ -4,7 +4,7 @@ import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
 import { CheckCircle2, Camera, Upload, Trash2, User as UserIcon, ArrowLeft } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+import { API_URL } from "../config/api";
 
 export default function Profile() {
   const navigate = useNavigate();

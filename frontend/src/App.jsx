@@ -17,6 +17,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
+// Career Horizon AI Floating Chatbot Widget
+import ChatbotWidget from "./components/chatbot/ChatbotWidget";
+
 import "./App.css";
 
 function App() {
@@ -55,6 +58,9 @@ function App() {
           {/* Fallback Route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+        {/* Global AI Career Assistant Floating Widget */}
+        <ChatbotWidget />
       </BrowserRouter>
     </AuthProvider>
   );

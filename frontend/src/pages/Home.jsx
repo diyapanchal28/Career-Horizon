@@ -15,7 +15,7 @@ import {
   getSubfieldMeta,
 } from "../utils/fieldDescriptions";
 
-const API_URL = "http://localhost:5000/api";
+import { API_URL } from "../config/api";
 
 export default function Home() {
   const navigate = useNavigate();

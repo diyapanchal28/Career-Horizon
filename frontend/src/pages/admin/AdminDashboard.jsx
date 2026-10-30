@@ -21,7 +21,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-const API_URL = "http://localhost:5000/api";
+import { API_URL } from "../../config/api";
 
 const EMPTY_CAREER_FORM = {
   name: "",
