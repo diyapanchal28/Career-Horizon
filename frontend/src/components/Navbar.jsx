@@ -18,6 +18,7 @@ import {
   ChevronRight,
   GraduationCap,
   ShieldCheck,
+  BarChart3,
 } from "lucide-react";
 
 import { API_URL } from "../config/api";
@@ -155,12 +156,22 @@ export default function Navbar() {
                 <Link
                   to="/admin"
                   className={
-                    location.pathname.startsWith("/admin")
+                    location.pathname === "/admin"
                       ? "nav-link active"
                       : "nav-link"
                   }
                 >
                   <span>Admin Panel</span>
+                </Link>
+                <Link
+                  to="/admin/reports"
+                  className={
+                    location.pathname === "/admin/reports"
+                      ? "nav-link active"
+                      : "nav-link"
+                  }
+                >
+                  <span>Reports</span>
                 </Link>
                 <Link
                   to="/careers"
@@ -481,7 +492,7 @@ export default function Navbar() {
                     <Link
                       to="/admin"
                       className={
-                        location.pathname.startsWith("/admin")
+                        location.pathname === "/admin"
                           ? "mobile-nav-link active"
                           : "mobile-nav-link"
                       }
@@ -489,6 +500,19 @@ export default function Navbar() {
                     >
                       <Shield size={18} />
                       <span>Admin Panel</span>
+                    </Link>
+
+                    <Link
+                      to="/admin/reports"
+                      className={
+                        location.pathname === "/admin/reports"
+                          ? "mobile-nav-link active"
+                          : "mobile-nav-link"
+                      }
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <BarChart3 size={18} />
+                      <span>Reports &amp; Analytics</span>
                     </Link>
 
                     <Link

@@ -14,6 +14,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const userRoutes = require("./routes/userRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
+const reportRoutes = require("./routes/reportRoutes");
 
 const app = express();
 
@@ -81,6 +82,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/admin/reports", reportRoutes);
 
 // MongoDB connection & Default Admin Seeding
 const ensureDefaultAdmin = async () => {

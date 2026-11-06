@@ -16,6 +16,7 @@ import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminReports from "./pages/admin/AdminReports";
 
 // Career Horizon AI Floating Chatbot Widget
 import ChatbotWidget from "./components/chatbot/ChatbotWidget";
@@ -54,6 +55,7 @@ function App() {
 
           {/* Admin Panel */}
           <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/admin/reports" element={<AdminReports />} />
 
           {/* Fallback Route */}
           <Route path="*" element={<Navigate to="/" replace />} />

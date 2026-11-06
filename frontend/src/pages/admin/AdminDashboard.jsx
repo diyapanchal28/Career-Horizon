@@ -19,6 +19,7 @@ import {
   UserCheck,
   UserX,
   ExternalLink,
+  BarChart3,
 } from "lucide-react";
 
 import { API_URL } from "../../config/api";
@@ -891,6 +892,21 @@ export default function AdminDashboard() {
               <span className="stat-label">Users</span>
             </div>
           </button>
+
+          <Link
+            to="/admin/reports"
+            className="admin-stat-card clickable"
+            style={{ textDecoration: "none" }}
+            title="Generate & Export Reports"
+          >
+            <div className="stat-icon purple" style={{ background: "#f3effe", color: "#632cd6" }}>
+              <BarChart3 size={20} />
+            </div>
+            <div className="stat-details">
+              <span className="stat-number">Reports</span>
+              <span className="stat-label">Analytics &amp; PDF</span>
+            </div>
+          </Link>
         </div>
 
         {/* Loading Indicator */}

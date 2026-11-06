@@ -6045,12 +6045,42 @@ button {
   border-bottom-color: var(--primary);
 }
 
-.admin-stats-grid,
-.admin-nav-cards-grid {
+.admin-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 24px;
+}
+
+.admin-nav-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.admin-nav-cards-grid .admin-stat-card {
+  padding: 14px 16px;
+  gap: 12px;
+  min-width: 0;
+}
+
+.admin-nav-cards-grid .admin-stat-card .stat-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.admin-nav-cards-grid .stat-number {
+  font-size: 1.35rem;
+  white-space: nowrap;
+}
+
+.admin-nav-cards-grid .stat-label {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-stat-card {
@@ -6148,19 +6178,36 @@ button {
 }
 
 @media (max-width: 900px) {
-  .admin-stats-grid,
+  .admin-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
   .admin-nav-cards-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
+
+  .admin-nav-cards-grid > :last-child:nth-child(odd) {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 640px) {
-  .admin-stats-grid,
+  .admin-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
   .admin-nav-cards-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     margin-bottom: 18px;
+  }
+
+  .admin-nav-cards-grid > :last-child:nth-child(odd) {
+    grid-column: span 2;
   }
 
   .admin-stat-card {
@@ -6189,10 +6236,15 @@ button {
   }
 }
 
-@media (max-width: 350px) {
+@media (max-width: 380px) {
   .admin-stats-grid,
   .admin-nav-cards-grid {
     grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .admin-nav-cards-grid > :last-child:nth-child(odd) {
+    grid-column: span 1;
   }
 }
 
@@ -10494,6 +10546,182 @@ button {
 .pdf-stat-sub {
   font-size: 0.78rem;
   color: var(--text-muted);
+}
+
+/* Enhanced Roadmap Progress Stat Card with Pie Chart */
+.dash-roadmap-prog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 6px;
+}
+
+.dash-roadmap-prog-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dash-roadmap-pie-svg {
+  flex-shrink: 0;
+  display: block;
+}
+
+.dash-each-roadmap-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border-light);
+}
+
+.dash-each-roadmap-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.8rem;
+  padding: 1px 0;
+}
+
+.dash-each-roadmap-left {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.dash-each-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dash-each-name {
+  color: var(--text-main);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 155px;
+}
+
+.dash-each-pct {
+  font-weight: 700;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+/* Full Width Continue Roadmap Button */
+.dash-roadmap-action-wrap {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.dash-roadmap-full-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: #ffffff !important;
+  font-size: 0.94rem;
+  font-weight: 700;
+  text-decoration: none !important;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(99, 44, 214, 0.22);
+}
+
+.dash-roadmap-full-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(99, 44, 214, 0.32);
+}
+
+.dash-roadmap-full-btn.completed {
+  background: #059669;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.22);
+}
+
+.dash-roadmap-full-btn.completed:hover {
+  background: #047857;
+}
+
+/* User Activity Timeline Area */
+.dash-activity-timeline-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dash-activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f5f3fa;
+}
+
+.dash-activity-item:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.dash-activity-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.dash-activity-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.dash-activity-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.dash-activity-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-activity-time {
+  font-size: 0.73rem;
+  color: var(--text-subtle);
+  white-space: nowrap;
+}
+
+.dash-activity-desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin: 0;
+  word-break: break-word;
 }
 
 .pdf-dash-main-grid {
