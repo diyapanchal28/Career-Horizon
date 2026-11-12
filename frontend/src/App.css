@@ -2752,7 +2752,9 @@ button {
 }
 
 .auth-input-wrapper input::placeholder {
-  color: var(--text-subtle);
+  color: #64748b;
+  opacity: 0.55;
+  font-weight: 400;
 }
 
 .password-toggle {
@@ -8098,8 +8100,30 @@ button {
 }
 
 .pdf-form-field input::placeholder {
-  color: var(--text-subtle);
-  opacity: 0.85;
+  color: #64748b;
+  opacity: 0.55;
+  font-weight: 400;
+  font-size: 0.95rem;
+}
+
+/* Suppress browser autofill blue/yellow background color and enforce clean white */
+.pdf-form-field input:-webkit-autofill,
+.pdf-form-field input:-webkit-autofill:hover, 
+.pdf-form-field input:-webkit-autofill:focus, 
+.pdf-form-field input:-webkit-autofill:active,
+.pdf-input-with-icon input:-webkit-autofill,
+.pdf-input-with-icon input:-webkit-autofill:hover,
+.pdf-input-with-icon input:-webkit-autofill:focus,
+.pdf-input-with-icon input:-webkit-autofill:active,
+.auth-input-wrapper input:-webkit-autofill,
+.auth-input-wrapper input:-webkit-autofill:hover,
+.auth-input-wrapper input:-webkit-autofill:focus,
+.auth-input-wrapper input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: var(--text-main, #1e293b) !important;
+  transition: background-color 5000s ease-in-out 0s;
+  background-color: #ffffff !important;
 }
 
 .pdf-input-with-icon {
@@ -8122,6 +8146,65 @@ button {
 
 .pdf-input-with-icon:focus-within .pdf-input-icon {
   color: var(--primary);
+}
+
+.pdf-input-with-icon.has-password-toggle input {
+  padding-right: 44px;
+}
+
+.pdf-input-icon-btn {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-subtle);
+  cursor: pointer;
+  border-radius: 6px;
+  z-index: 2;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.pdf-input-icon-btn:hover {
+  color: var(--primary);
+  background-color: rgba(99, 102, 241, 0.08);
+}
+
+.pdf-input-icon-btn .pdf-input-icon {
+  position: static !important;
+  pointer-events: auto !important;
+}
+
+.pdf-icon-unlocked {
+  color: #10b981 !important;
+}
+
+.pdf-password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-subtle);
+  cursor: pointer;
+  border-radius: 6px;
+  z-index: 2;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.pdf-password-toggle-btn:hover {
+  color: var(--primary);
+  background-color: rgba(99, 102, 241, 0.08);
 }
 
 .pdf-disabled-input {

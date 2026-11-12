@@ -6,6 +6,9 @@ import {
   AlertCircle,
   Loader2,
   Lock,
+  Unlock,
+  Eye,
+  EyeOff,
   ArrowLeft,
   Mail,
   KeyRound,
@@ -21,12 +24,21 @@ const isValidEmail = (email) => {
 export default function Login() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
 
   const loginMode = searchParams.get("role") === "admin" ? "admin" : "student";
 
   // View mode: "login" or "forgot"
   const [view, setView] = useState("login");
+
+  // Password visibility toggles
+  const [showPassword, setShowPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+
+  // Autofill suppression locks (inputs stay readOnly until first interaction/focus)
+  const [readOnlyEmail, setReadOnlyEmail] = useState(true);
+  const [readOnlyPassword, setReadOnlyPassword] = useState(true);
 
   // Login form state
   const [form, setForm] = useState({
@@ -53,8 +65,38 @@ export default function Login() {
   const [forgotSuccess, setForgotSuccess] = useState("");
   const [devOtpNotice, setDevOtpNotice] = useState("");
 
+  // If already authenticated, redirect immediately to dashboard or admin
   useEffect(() => {
+    if (isAuthenticated) {
+      if (user?.role === "admin" || loginMode === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, loginMode, navigate]);
+
+  // Clean form credentials, reset locks, and prevent browser auto-fill on mount/refresh
+  useEffect(() => {
+    setForm({ email: "", password: "" });
+    setShowPassword(false);
+    setReadOnlyEmail(true);
+    setReadOnlyPassword(true);
+    setErrors({});
+    setTouched({});
     sessionStorage.removeItem("authGateMessage");
+
+    // Force blank state slightly after mount to catch delayed browser autofill injections
+    const clearTimer = setTimeout(() => {
+      setForm((prev) => {
+        if (!touched.email && !touched.password) {
+          return { email: "", password: "" };
+        }
+        return prev;
+      });
+    }, 150);
+
+    return () => clearTimeout(clearTimer);
   }, []);
 
   // When changing login mode via URL param, return to login view
@@ -154,13 +196,11 @@ export default function Login() {
         return;
       }
 
-      // Check for return path or onboarding flow
+      // Check for return path or default directly to /dashboard
       const returnTo = sessionStorage.getItem("returnAfterLogin");
       if (returnTo) {
         sessionStorage.removeItem("returnAfterLogin");
         navigate(returnTo);
-      } else if (!data.user?.assessmentCompleted) {
-        navigate("/profile?onboarding=1");
       } else {
         navigate("/dashboard");
       }
@@ -436,6 +476,24 @@ export default function Login() {
                   noValidate
                   autoComplete="off"
                 >
+                  {/* Invisible dummy fields that absorb browser auto-fill on page load */}
+                  <input
+                    type="text"
+                    name="prevent_autofill_email"
+                    style={{ position: "absolute", opacity: 0, height: 0, width: 0, zIndex: -1, pointerEvents: "none" }}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                  />
+                  <input
+                    type="password"
+                    name="prevent_autofill_password"
+                    style={{ position: "absolute", opacity: 0, height: 0, width: 0, zIndex: -1, pointerEvents: "none" }}
+                    tabIndex={-1}
+                    autoComplete="new-password"
+                    aria-hidden="true"
+                  />
+
                   <div className="pdf-form-field">
                     <label htmlFor="email">
                       {loginMode === "admin" ? "Admin Email" : "Email"}{" "}
@@ -448,10 +506,13 @@ export default function Login() {
                       value={form.email}
                       onChange={handleLoginChange}
                       onBlur={handleLoginBlur}
+                      onFocus={() => setReadOnlyEmail(false)}
+                      onClick={() => setReadOnlyEmail(false)}
+                      readOnly={readOnlyEmail}
                       placeholder={
                         loginMode === "admin"
-                          ? "admin@careerhorizon.com"
-                          : "Enter your email"
+                          ? "Admin Email"
+                          : "Email"
                       }
                       className={
                         touched.email && errors.email ? "pdf-input-invalid" : ""
@@ -471,28 +532,67 @@ export default function Login() {
                       Password <span className="required-star">*</span>
                     </label>
                     <div
-                      className={`pdf-input-with-icon ${
+                      className={`pdf-input-with-icon has-password-toggle ${
                         touched.password && errors.password
                           ? "pdf-input-invalid"
                           : ""
                       }`}
                     >
-                      <Lock
-                        size={16}
-                        className="pdf-input-icon"
-                        aria-hidden="true"
-                      />
+                      <button
+                        type="button"
+                        className="pdf-input-icon-btn"
+                        onClick={() => {
+                          setReadOnlyPassword(false);
+                          setShowPassword((prev) => !prev);
+                        }}
+                        title={showPassword ? "Lock password (Hide)" : "Unlock password (Show)"}
+                        aria-label={showPassword ? "Lock password (Hide)" : "Unlock password (Show)"}
+                        tabIndex={-1}
+                      >
+                        {showPassword ? (
+                          <Unlock
+                            size={16}
+                            className="pdf-input-icon pdf-icon-unlocked"
+                            aria-hidden="true"
+                          />
+                        ) : (
+                          <Lock
+                            size={16}
+                            className="pdf-input-icon"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </button>
                       <input
                         id="password"
-                        type="password"
+                        type={showPassword ? "text" : "password"}
                         name="password"
                         value={form.password}
                         onChange={handleLoginChange}
                         onBlur={handleLoginBlur}
-                        placeholder="Enter your password"
+                        onFocus={() => setReadOnlyPassword(false)}
+                        onClick={() => setReadOnlyPassword(false)}
+                        readOnly={readOnlyPassword}
+                        placeholder="Password"
                         autoComplete="new-password"
                         required
                       />
+                      <button
+                        type="button"
+                        className="pdf-password-toggle-btn"
+                        onClick={() => {
+                          setReadOnlyPassword(false);
+                          setShowPassword((prev) => !prev);
+                        }}
+                        title={showPassword ? "Hide password" : "Show password"}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? (
+                          <Eye size={18} aria-hidden="true" />
+                        ) : (
+                          <EyeOff size={18} aria-hidden="true" />
+                        )}
+                      </button>
                     </div>
                     {touched.password && errors.password && (
                       <span className="pdf-field-error">
@@ -714,20 +814,37 @@ export default function Login() {
                         New Password <span className="required-star">*</span>
                       </label>
                       <div
-                        className={`pdf-input-with-icon ${
+                        className={`pdf-input-with-icon has-password-toggle ${
                           forgotTouched.newPassword && forgotErrors.newPassword
                             ? "pdf-input-invalid"
                             : ""
                         }`}
                       >
-                        <Lock
-                          size={16}
-                          className="pdf-input-icon"
-                          aria-hidden="true"
-                        />
+                        <button
+                          type="button"
+                          className="pdf-input-icon-btn"
+                          onClick={() => setShowNewPassword((prev) => !prev)}
+                          title={showNewPassword ? "Lock (Hide)" : "Unlock (Show)"}
+                          aria-label={showNewPassword ? "Lock (Hide)" : "Unlock (Show)"}
+                          tabIndex={-1}
+                        >
+                          {showNewPassword ? (
+                            <Unlock
+                              size={16}
+                              className="pdf-input-icon pdf-icon-unlocked"
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <Lock
+                              size={16}
+                              className="pdf-input-icon"
+                              aria-hidden="true"
+                            />
+                          )}
+                        </button>
                         <input
                           id="newPassword"
-                          type="password"
+                          type={showNewPassword ? "text" : "password"}
                           name="newPassword"
                           value={forgotForm.newPassword}
                           onChange={handleForgotChange}
@@ -736,6 +853,19 @@ export default function Login() {
                           autoComplete="new-password"
                           required
                         />
+                        <button
+                          type="button"
+                          className="pdf-password-toggle-btn"
+                          onClick={() => setShowNewPassword((prev) => !prev)}
+                          title={showNewPassword ? "Hide password" : "Show password"}
+                          aria-label={showNewPassword ? "Hide password" : "Show password"}
+                        >
+                          {showNewPassword ? (
+                            <Eye size={18} aria-hidden="true" />
+                          ) : (
+                            <EyeOff size={18} aria-hidden="true" />
+                          )}
+                        </button>
                       </div>
                       {forgotTouched.newPassword &&
                         forgotErrors.newPassword && (
@@ -752,21 +882,38 @@ export default function Login() {
                         <span className="required-star">*</span>
                       </label>
                       <div
-                        className={`pdf-input-with-icon ${
+                        className={`pdf-input-with-icon has-password-toggle ${
                           forgotTouched.confirmNewPassword &&
                           forgotErrors.confirmNewPassword
                             ? "pdf-input-invalid"
                             : ""
                         }`}
                       >
-                        <Lock
-                          size={16}
-                          className="pdf-input-icon"
-                          aria-hidden="true"
-                        />
+                        <button
+                          type="button"
+                          className="pdf-input-icon-btn"
+                          onClick={() => setShowConfirmNewPassword((prev) => !prev)}
+                          title={showConfirmNewPassword ? "Lock (Hide)" : "Unlock (Show)"}
+                          aria-label={showConfirmNewPassword ? "Lock (Hide)" : "Unlock (Show)"}
+                          tabIndex={-1}
+                        >
+                          {showConfirmNewPassword ? (
+                            <Unlock
+                              size={16}
+                              className="pdf-input-icon pdf-icon-unlocked"
+                              aria-hidden="true"
+                            />
+                          ) : (
+                            <Lock
+                              size={16}
+                              className="pdf-input-icon"
+                              aria-hidden="true"
+                            />
+                          )}
+                        </button>
                         <input
                           id="confirmNewPassword"
-                          type="password"
+                          type={showConfirmNewPassword ? "text" : "password"}
                           name="confirmNewPassword"
                           value={forgotForm.confirmNewPassword}
                           onChange={handleForgotChange}
@@ -775,6 +922,19 @@ export default function Login() {
                           autoComplete="new-password"
                           required
                         />
+                        <button
+                          type="button"
+                          className="pdf-password-toggle-btn"
+                          onClick={() => setShowConfirmNewPassword((prev) => !prev)}
+                          title={showConfirmNewPassword ? "Hide password" : "Show password"}
+                          aria-label={showConfirmNewPassword ? "Hide password" : "Show password"}
+                        >
+                          {showConfirmNewPassword ? (
+                            <Eye size={18} aria-hidden="true" />
+                          ) : (
+                            <EyeOff size={18} aria-hidden="true" />
+                          )}
+                        </button>
                       </div>
                       {forgotTouched.confirmNewPassword &&
                         forgotErrors.confirmNewPassword && (

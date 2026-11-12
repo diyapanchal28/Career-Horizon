@@ -39,6 +39,17 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    // Admin users do not have student saved careers
+    try {
+      const storedUser = localStorage.getItem("user");
+      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+      if (parsedUser?.role === "admin") {
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
     try {
       setLoadingSaved(true);
       const res = await fetch(`${API_URL}/saved-careers`, {
@@ -48,9 +59,7 @@ export function AuthProvider({ children }) {
       });
 
       if (!res.ok) {
-        if (res.status === 401) {
-          logout();
-        }
+        // Do NOT log out the user if saved-careers fails
         return;
       }
 
@@ -69,7 +78,7 @@ export function AuthProvider({ children }) {
     } finally {
       setLoadingSaved(false);
     }
-  }, [token, logout]);
+  }, [token]);
 
   // Refresh user profile from backend
   const refreshUser = useCallback(async (authToken) => {
@@ -116,37 +125,53 @@ export function AuthProvider({ children }) {
       }
       try {
         setLoadingSaved(true);
-        const [savedRes, profileRes] = await Promise.all([
-          fetch(`${API_URL}/saved-careers`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_URL}/users/profile`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
 
-        if (savedRes.status === 401 || profileRes.status === 401) {
+        // Fetch user profile to verify token validity
+        const profileRes = await fetch(`${API_URL}/users/profile`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        // ONLY log out if the backend returns 401 specifically on profile
+        if (profileRes.status === 401) {
           logout();
           return;
         }
 
+        let userRole = user?.role;
         if (profileRes.ok && !ignore) {
           const pData = await profileRes.json();
           const uObj = pData.user || pData;
           localStorage.setItem("user", JSON.stringify(uObj));
           setUser(uObj);
+          userRole = uObj.role;
         }
 
-        if (savedRes.ok && !ignore) {
-          const data = await savedRes.json();
-          const list = Array.isArray(data) ? data : data.savedCareers || data.data || [];
-          setSavedCareers(list);
-          const idSet = new Set();
-          list.forEach((item) => {
-            const id = item.career?._id || item.career?.id || item.career || item.careerId;
-            if (id) idSet.add(String(id));
-          });
-          setSavedCareerIds(idSet);
+        // Only fetch student saved careers if not an admin
+        if (userRole !== "admin" && !ignore) {
+          try {
+            const savedRes = await fetch(`${API_URL}/saved-careers`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (savedRes.ok && !ignore) {
+              const data = await savedRes.json();
+              const list = Array.isArray(data)
+                ? data
+                : data.savedCareers || data.data || [];
+              setSavedCareers(list);
+              const idSet = new Set();
+              list.forEach((item) => {
+                const id =
+                  item.career?._id ||
+                  item.career?.id ||
+                  item.career ||
+                  item.careerId;
+                if (id) idSet.add(String(id));
+              });
+              setSavedCareerIds(idSet);
+            }
+          } catch (err) {
+            console.warn("Could not load saved careers:", err);
+          }
         }
       } catch (err) {
         console.error("Error loading user session data:", err);
@@ -159,7 +184,7 @@ export function AuthProvider({ children }) {
     return () => {
       ignore = true;
     };
-  }, [token, logout]);
+  }, [token, user?.role, logout]);
 
   // Login handler
   const login = (newToken, userData) => {
@@ -171,7 +196,9 @@ export function AuthProvider({ children }) {
       setUser(userData);
     }
 
-    fetchSavedCareers(newToken);
+    if (userData?.role !== "admin") {
+      fetchSavedCareers(newToken);
+    }
     refreshUser(newToken);
   };
 

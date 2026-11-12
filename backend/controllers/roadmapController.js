@@ -3,6 +3,7 @@ const RoadmapProgress = require("../models/RoadmapProgress");
 const Career = require("../models/Career");
 const Activity = require("../models/Activity");
 const Notification = require("../models/Notification");
+const gamificationService = require("../services/gamificationService");
 
 // Get all roadmaps
 const getRoadmaps = async (req, res) => {
@@ -214,12 +215,32 @@ const toggleRoadmapStep = async (req, res) => {
             ? Math.round((completedIds.length / totalSteps) * 100)
             : 0;
 
+        let gamification = null;
+        if (completed) {
+            try {
+                const steps = roadmap.steps || [];
+                const stepObj = steps.find(
+                    (s) => String(s._id) === stepIdStr || String(s.stepNumber) === stepIdStr
+                );
+                gamification = await gamificationService.onRoadmapStepCompleted(
+                    userId,
+                    careerId,
+                    roadmap,
+                    stepObj,
+                    progressPercentage
+                );
+            } catch (gErr) {
+                console.error("Gamification reward error:", gErr);
+            }
+        }
+
         res.json({
             message: completed ? "Step marked as complete" : "Step marked as incomplete",
             completed,
             completedStepIds: completedIds,
             progressPercentage,
-            totalSteps
+            totalSteps,
+            gamification
         });
     } catch (error) {
         console.error("Toggle step error:", error);

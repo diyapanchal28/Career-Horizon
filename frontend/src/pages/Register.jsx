@@ -2,7 +2,17 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/useAuth";
 import Navbar from "../components/Navbar";
-import { AlertCircle, Loader2, Lock, ArrowLeft, User, Mail } from "lucide-react";
+import {
+  AlertCircle,
+  Loader2,
+  Lock,
+  Unlock,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  User,
+  Mail,
+} from "lucide-react";
 
 import { API_URL } from "../config/api";
 
@@ -12,7 +22,7 @@ const isValidEmail = (email) => {
 
 export default function Register() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
 
   const [form, setForm] = useState({
     name: "",
@@ -21,10 +31,24 @@ export default function Register() {
     confirmPassword: "",
   });
 
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (user?.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
   useEffect(() => {
     sessionStorage.removeItem("authGateMessage");
@@ -249,7 +273,7 @@ export default function Register() {
                   value={form.name}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  placeholder="Enter your full name"
+                  placeholder="Full Name"
                   className={
                     touched.name && errors.name ? "pdf-input-invalid" : ""
                   }
@@ -274,11 +298,11 @@ export default function Register() {
                   value={form.email}
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  placeholder="Enter your email"
+                  placeholder="Email"
                   className={
                     touched.email && errors.email ? "pdf-input-invalid" : ""
                   }
-                  autoComplete="email"
+                  autoComplete="off"
                   required
                 />
                 {touched.email && errors.email && (
@@ -293,28 +317,58 @@ export default function Register() {
                   Password <span className="required-star">*</span>
                 </label>
                 <div
-                  className={`pdf-input-with-icon ${
+                  className={`pdf-input-with-icon has-password-toggle ${
                     touched.password && errors.password
                       ? "pdf-input-invalid"
                       : ""
                   }`}
                 >
-                  <Lock
-                    size={16}
-                    className="pdf-input-icon"
-                    aria-hidden="true"
-                  />
+                  <button
+                    type="button"
+                    className="pdf-input-icon-btn"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    title={showPassword ? "Lock (Hide)" : "Unlock (Show)"}
+                    aria-label={showPassword ? "Lock (Hide)" : "Unlock (Show)"}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? (
+                      <Unlock
+                        size={16}
+                        className="pdf-input-icon pdf-icon-unlocked"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Lock
+                        size={16}
+                        className="pdf-input-icon"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </button>
                   <input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     name="password"
                     value={form.password}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="Enter password (min 6 characters)"
+                    placeholder="Password"
                     autoComplete="new-password"
                     required
                   />
+                  <button
+                    type="button"
+                    className="pdf-password-toggle-btn"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    title={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <Eye size={18} aria-hidden="true" />
+                    ) : (
+                      <EyeOff size={18} aria-hidden="true" />
+                    )}
+                  </button>
                 </div>
                 {touched.password && errors.password ? (
                   <span className="pdf-field-error">
@@ -330,28 +384,58 @@ export default function Register() {
                   Confirm password <span className="required-star">*</span>
                 </label>
                 <div
-                  className={`pdf-input-with-icon ${
+                  className={`pdf-input-with-icon has-password-toggle ${
                     touched.confirmPassword && errors.confirmPassword
                       ? "pdf-input-invalid"
                       : ""
                   }`}
                 >
-                  <Lock
-                    size={16}
-                    className="pdf-input-icon"
-                    aria-hidden="true"
-                  />
+                  <button
+                    type="button"
+                    className="pdf-input-icon-btn"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    title={showConfirmPassword ? "Lock (Hide)" : "Unlock (Show)"}
+                    aria-label={showConfirmPassword ? "Lock (Hide)" : "Unlock (Show)"}
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <Unlock
+                        size={16}
+                        className="pdf-input-icon pdf-icon-unlocked"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <Lock
+                        size={16}
+                        className="pdf-input-icon"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </button>
                   <input
                     id="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
                     value={form.confirmPassword}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="Re-enter password"
+                    placeholder="Confirm Password"
                     autoComplete="new-password"
                     required
                   />
+                  <button
+                    type="button"
+                    className="pdf-password-toggle-btn"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    title={showConfirmPassword ? "Hide password" : "Show password"}
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? (
+                      <Eye size={18} aria-hidden="true" />
+                    ) : (
+                      <EyeOff size={18} aria-hidden="true" />
+                    )}
+                  </button>
                 </div>
                 {touched.confirmPassword && errors.confirmPassword && (
                   <span className="pdf-field-error">
